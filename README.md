@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NUTRI.AI
 
-## Getting Started
+Assistente de planejamento alimentar baseado em evidências, personalizado para objetivo, rotina, preferências, cultura alimentar, orçamento e segurança clínica.
 
-First, run the development server:
+> O NUTRI.AI não substitui médico ou nutricionista, não faz diagnósticos e não altera medicamentos.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Stack
+
+- **Next.js 16** (App Router, Server Actions) + TypeScript + Tailwind CSS 4 — interface mobile-first
+- **Supabase** (Postgres + Auth, região São Paulo) com Row Level Security em todas as tabelas de usuário
+- **Claude API** (`claude-opus-5`, opcional) para o assistente conversacional; sem chave, usa um motor de regras
+- **Vitest** para o motor nutricional
+
+## Arquitetura
+
+```
+src/
+  data/            base de referência versionada: alimentos (TACO/USDA), receitas, fontes científicas
+  lib/nutrition/   motor puro e testado
+    calc.ts        TMB (Mifflin-St Jeor + Harris-Benedict), PAL (FAO/OMS/UNU), faixas, macros, fibras, água
+    safety.ts      regras de segurança clínica → alertas, bloqueios e restrições de cálculo
+    planner.ts     gerador de cardápio (diário/semanal/mensal), escala de porções, sódio, orçamento, proteína, variedade
+    swaps.ts       trocas de alimento/refeição com equivalência, fome, comer fora
+    shopping.ts    lista de compras (soma, cozido→cru, categorias)
+    prep.ts        preparação semanal e reaproveitamento
+    review.ts      revisão 1–2 semanas, tendência de peso, associação alimento–sintoma (sem causalidade)
+    evidence.ts    recomendações rastreáveis (estimativa / evidência / hipótese / validar com profissional)
+  lib/server/      camada de dados (perfil, planos, ações, assistente, criptografia de campos)
+  app/             páginas (onboarding, painel, plano, receitas, compras, registros, evolução, evidências…)
+supabase/migrations/  esquema SQL, RLS e funções
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Prioridade de decisão do motor: **segurança → qualidade nutricional → personalização → aderência → praticidade → custo → experiência**. Exemplos: trocas “mais barato” só aceitam opções equivalentes em proteína e energia; o ajuste de orçamento não repete receitas além do limite semanal; déficits são limitados a 15–20% do gasto e ao piso de segurança.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Privacidade e LGPD
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Consentimento específico para dados de saúde (art. 11) registrado com data e versão no cadastro
+- Campos de saúde cifrados na aplicação (AES-256-GCM, chave `HEALTH_DATA_KEY`) além da criptografia do banco
+- RLS: cada usuário só acessa seus próprios dados; tabelas de referência são somente leitura
+- Exportação completa (JSON), revogação do consentimento de saúde e exclusão de conta em **Configurações**
+- Registro de auditoria das ações relevantes
 
-## Learn More
+## Variáveis de ambiente
 
-To learn more about Next.js, take a look at the following resources:
+Veja `.env.example`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variável | Uso |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | cliente Supabase |
+| `HEALTH_DATA_KEY` | 32 bytes em base64 (`openssl rand -base64 32`). **Guarde com segurança**: sem ela, os dados de saúde cifrados não podem ser lidos |
+| `ANTHROPIC_API_KEY` | opcional — ativa o assistente com Claude |
+| `ANTHROPIC_MODEL` | opcional — padrão `claude-opus-5` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Desenvolvimento
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npx vitest run     # testes do motor nutricional
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Migrações em `supabase/migrations` (aplicar em ordem). A base de alimentos, receitas e fontes vive em `src/data` e é a fonte da verdade usada pelo app; as tabelas `foods`, `recipes`, `substitutions` e `scientific_sources` no banco são um espelho opcional.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Fontes de dados
+
+- Composição: TACO 4ª ed. (NEPA/UNICAMP, 2011) e USDA FoodData Central — cada alimento indica sua fonte
+- Referências científicas com DOI/URL verificados em `src/data/sources.ts` e na página “Por que o sistema recomendou isso?”
+- Preços: estimativas aproximadas de varejo (2026) para planejamento — não são cotações
+
+## Expansões preparadas
+
+O motor nutricional é independente da interface (`src/lib/nutrition`), permitindo reutilização em apps iOS/Android, integração com balanças e relógios, leitura de código de barras/rótulos e acompanhamento por nutricionista.
