@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeftRight, Check, ChefHat, ChevronRight, Clock, Leaf, MoreHorizontal, PiggyBank, Store, Timer, X, Zap } from "lucide-react";
+import { ArrowLeftRight, Check, ChefHat, ChevronRight, Clock, Leaf, PiggyBank, Store, Timer, X, Zap } from "lucide-react";
 import { FOOD_MAP } from "@/data/foods";
 import { RECIPE_MAP } from "@/data/recipes";
-import { brl, macrosItens } from "@/lib/nutrition/foodmath";
+import { brl, formatMedida, macrosItens } from "@/lib/nutrition/foodmath";
 import { CRITERIOS, LOCAIS_FORA, type CriterioRefeicao, type OpcaoTrocaAlimento, type OpcaoTrocaRefeicao } from "@/lib/nutrition/swaps";
 import { aplicarTrocaAlimento, aplicarTrocaRefeicao, comerFora, desfazerComerFora, listarTrocasAlimento, listarTrocasRefeicao } from "@/lib/server/actions-plano";
-import { registrarRefeicao } from "@/lib/server/actions-registro";
+import { desfazerRegistroRefeicao, registrarRefeicao } from "@/lib/server/actions-registro";
 import type { ItemPlanejado, RefeicaoPlanejada } from "@/lib/types";
-import { Badge, IconButton, cx } from "@/components/ui";
+import { IconButton, cx } from "@/components/ui";
 
 export interface RefeicaoView extends RefeicaoPlanejada {
   id: string;
@@ -49,13 +49,15 @@ export function Sheet({ titulo, descricao, onClose, children }: { titulo: string
   );
 }
 
+/** Quantidade sempre recalculada a partir dos gramas (texto natural e consistente) */
 function Quantidade({ i, unidades }: { i: ItemPlanejado; unidades: string }) {
-  if (unidades === "gramas") return <>{Math.round(i.g)} g</>;
-  if (unidades === "caseiras") return <>{i.medida}</>;
+  const g = `${Math.round(i.g)} g`;
+  if (unidades === "gramas") return <>{g}</>;
+  const caseira = formatMedida(i.food, i.g);
+  if (unidades === "caseiras") return <>{caseira}</>;
   return (
     <>
-      <span className="block">{i.medida}</span>
-      <span className="block text-xs text-muted">{Math.round(i.g)} g</span>
+      {caseira} <span className="text-muted">· {g}</span>
     </>
   );
 }
@@ -71,7 +73,7 @@ const ICONE_CRITERIO: Record<CriterioRefeicao, typeof Zap> = {
 };
 
 const ROTULO_CRITERIO: Record<CriterioRefeicao, string> = {
-  qualquer: "Outra opção",
+  qualquer: "Qualquer outra",
   barato: "Mais barata",
   rapido: "Mais rápida",
   vegetariana: "Vegetariana",
@@ -94,14 +96,45 @@ function Opcao({ titulo, apoio, detalhe, onClick, disabled }: { titulo: ReactNod
   );
 }
 
-export function RefeicaoCard({ r, mostrarMacros = true, unidades = "ambos", compacto = false }: { r: RefeicaoView; mostrarMacros?: boolean; unidades?: string; compacto?: boolean }) {
+export type StatusRegistro = "sim" | "parcial" | "nao";
+export interface Registro {
+  status: StatusRegistro;
+  hora?: string | null;
+}
+
+const TEXTO_REGISTRO: Record<StatusRegistro, string> = {
+  sim: "Você comeu esta refeição",
+  parcial: "Você comeu parte desta refeição",
+  nao: "Você comeu outra coisa no lugar",
+};
+
+export function RefeicaoCard({
+  r,
+  registro = null,
+  mostrarMacros = true,
+  unidades = "ambos",
+  compacto = false,
+}: {
+  r: RefeicaoView;
+  registro?: Registro | null;
+  mostrarMacros?: boolean;
+  unidades?: string;
+  compacto?: boolean;
+}) {
   const router = useRouter();
   const [pendente, start] = useTransition();
   const [painel, setPainel] = useState<null | "acoes" | "trocaRefeicao" | "trocaAlimento" | "fora" | "orientacao">(null);
   const [opRef, setOpRef] = useState<OpcaoTrocaRefeicao[] | null>(null);
   const [opAli, setOpAli] = useState<{ indice: number; opcoes: OpcaoTrocaAlimento[] } | null>(null);
   const [orient, setOrient] = useState<string[]>([]);
-  const [registrado, setRegistrado] = useState<string | null>(null);
+  // estado local espelha o que está salvo no servidor (e é atualizado na hora ao responder)
+  const [reg, setReg] = useState<Registro | null>(registro);
+  const chaveSalva = registro ? `${registro.status}|${registro.hora ?? ""}` : "";
+  const [chaveAnterior, setChaveAnterior] = useState(chaveSalva);
+  if (chaveSalva !== chaveAnterior) {
+    setChaveAnterior(chaveSalva);
+    setReg(registro);
+  }
   const [criterio, setCriterio] = useState<CriterioRefeicao>("qualquer");
   const m = macrosItens(r.itens);
   const rec = r.receitaId ? RECIPE_MAP[r.receitaId] : null;
@@ -120,110 +153,142 @@ export function RefeicaoCard({ r, mostrarMacros = true, unidades = "ambos", comp
       setPainel("trocaAlimento");
       setOpAli({ indice, opcoes: await listarTrocasAlimento(r.id, indice) });
     });
-  const registrar = (s: "sim" | "parcial" | "nao") =>
+  const registrar = (s: StatusRegistro) =>
     start(async () => {
-      await registrarRefeicao({ mealId: r.id, refeicao: r.nome, seguiu_plano: s, data: r.dia });
-      setRegistrado(s);
+      setReg({ status: s });
+      const res = await registrarRefeicao({ mealId: r.id, refeicao: r.nome, seguiu_plano: s, data: r.dia });
+      if (res.ok) setReg({ status: s, hora: "hora" in res ? res.hora : undefined });
+      router.refresh();
+    });
+  const desfazer = () =>
+    start(async () => {
+      setReg(null);
+      await desfazerRegistroRefeicao(r.id);
       router.refresh();
     });
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-line/80 bg-surface shadow-card">
-      <header className="flex items-start gap-3 p-4 pb-2 sm:p-5 sm:pb-2">
+    <article className={cx("overflow-hidden rounded-3xl border bg-surface shadow-card", reg ? "border-brand/30" : "border-line/80")}>
+      <header className="flex items-start gap-3 p-4 sm:p-5">
         {rec && (
           <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-soft to-accent-soft text-2xl" aria-hidden>
             {rec.ilustracao}
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-[0.06em] text-muted">
+          <h3 className="text-lg font-bold leading-tight">
             {r.nome}
-            {r.horario && <span className="font-semibold normal-case tracking-normal"> · {r.horario}</span>}
-          </p>
-          <h3 className="mt-0.5 text-[17px] font-bold leading-snug">{r.foraDeCasa ? "Refeição fora de casa" : rec?.nome ?? "Refeição"}</h3>
-          {r.nota && <p className="mt-1 text-xs text-muted">{r.nota}</p>}
+            {r.horario && <span className="font-medium text-muted"> · {r.horario}</span>}
+          </h3>
+          <p className="mt-0.5 text-[15px] leading-snug text-ink/85">{r.foraDeCasa ? "Você vai comer fora de casa" : rec?.nome ?? "Refeição"}</p>
+          {r.nota && <p className="mt-1 text-[13px] text-muted">{r.nota}</p>}
+          {rec && !r.foraDeCasa && (
+            <Link href={`/receitas/${rec.id}`} className="mt-1 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand hover:underline">
+              <ChefHat size={16} /> Ver como preparar · {rec.tempo} min
+            </Link>
+          )}
         </div>
-        <IconButton label={`Mais opções para ${r.nome}`} icon={MoreHorizontal} onClick={() => setPainel("acoes")} className="-mr-1 border border-line" />
       </header>
 
       {!r.foraDeCasa && (
-        <ul className="px-4 sm:px-5" aria-label="Itens da refeição">
-          {r.itens.map((i, k) => (
-            <li key={k} className="flex min-h-12 items-center gap-2 border-t border-line/60 py-2 first:border-t-0">
-              <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium leading-snug">{FOOD_MAP[i.food]?.nome ?? i.food}</p>
-                {i.preparo && <p className="text-xs text-muted">{i.preparo}</p>}
-              </div>
-              <div className="tabular shrink-0 text-right text-[13px] leading-snug text-ink/80">
-                <Quantidade i={i} unidades={unidades} />
-              </div>
-              {!compacto && <IconButton label={`Trocar ${FOOD_MAP[i.food]?.nome}`} icon={ArrowLeftRight} onClick={() => trocarAlimento(k)} className="size-9 text-brand hover:bg-brand-soft" />}
-            </li>
-          ))}
-        </ul>
+        <div className="px-4 sm:px-5">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.06em] text-muted">O que comer</p>
+          <ul className="rounded-2xl bg-surface-2/70 px-3.5" aria-label={`Itens do ${r.nome.toLowerCase()}`}>
+            {r.itens.map((i, k) => (
+              <li key={k} className="border-t border-line/60 py-2.5 first:border-t-0">
+                <p className="text-[16px] font-semibold leading-snug">{FOOD_MAP[i.food]?.nome ?? i.food}</p>
+                <p className="tabular text-[15px] leading-snug text-ink/80">
+                  <Quantidade i={i} unidades={unidades} />
+                  {i.preparo && <span className="text-muted"> · {i.preparo}</span>}
+                </p>
+              </li>
+            ))}
+          </ul>
+          {mostrarMacros && <p className="tabular mt-2 text-[13px] text-muted">Cerca de {Math.round(m.kcal)} kcal e {Math.round(m.p)} g de proteína.</p>}
+        </div>
       )}
 
       {r.foraDeCasa && (
-        <div className="px-4 pb-2 sm:px-5">
+        <div className="px-4 sm:px-5">
           <button onClick={() => setPainel("fora")} className="min-h-10 text-sm font-semibold text-brand underline underline-offset-2">
             Ver dicas para comer fora
           </button>
         </div>
       )}
 
-      {(mostrarMacros || rec) && !r.foraDeCasa && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 pb-1 pt-2 text-xs text-muted sm:px-5">
-          {mostrarMacros && (
-            <span className="tabular">
-              <strong className="font-semibold text-ink">{Math.round(m.kcal)} kcal</strong> · P {Math.round(m.p)} g · C {Math.round(m.c)} g · G {Math.round(m.g)} g · F {Math.round(m.f)} g
-            </span>
-          )}
-          {rec && (
-            <Link href={`/receitas/${rec.id}`} className="ml-auto inline-flex min-h-9 items-center gap-1 font-semibold text-brand hover:underline">
-              <ChefHat size={14} /> Receita · {rec.tempo} min
-            </Link>
-          )}
+      {!compacto && (
+        <div className="px-4 pt-3 sm:px-5">
+          <button onClick={() => setPainel("acoes")} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-surface text-[15px] font-semibold text-ink transition hover:border-brand/50 hover:bg-brand-soft/40">
+            <ArrowLeftRight size={17} className="text-brand" /> Trocar algo nesta refeição
+          </button>
         </div>
       )}
 
-      <footer className="mt-2 flex gap-2 border-t border-line/60 bg-surface-2/60 p-3 sm:px-5">
-        {registrado ? (
-          <Badge tom="brand" className="min-h-9 px-3">
-            <Check size={14} /> Registrado{registrado === "parcial" ? " — em parte" : registrado === "nao" ? " — comi outra coisa" : ""}
-          </Badge>
+      {/* Registro: pergunta simples; a resposta fica salva e visível ao voltar à página */}
+      <footer className={cx("mt-4 border-t p-4 sm:px-5", reg ? "border-brand/20 bg-brand-soft/70" : "border-line/60 bg-surface-2/60")} aria-live="polite">
+        {reg ? (
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+              <Check size={18} />
+            </span>
+            <p className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-brand-strong">
+              {TEXTO_REGISTRO[reg.status]}
+              {reg.hora && <span className="block text-[13px] font-normal text-brand-strong/80">Registrado às {reg.hora.slice(0, 5)}</span>}
+            </p>
+            <button onClick={desfazer} disabled={pendente} className="min-h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-brand-strong underline underline-offset-2 disabled:opacity-60">
+              Desfazer
+            </button>
+          </div>
         ) : (
           <>
-            <button onClick={() => registrar("sim")} disabled={pendente} className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand px-3 text-sm font-semibold text-white shadow-card hover:bg-brand-strong disabled:opacity-60">
-              <Check size={16} /> Comi
-            </button>
-            <button onClick={() => registrar("parcial")} disabled={pendente} className="min-h-10 rounded-xl border border-line bg-surface px-3 text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
-              Em parte
-            </button>
-            <button onClick={() => registrar("nao")} disabled={pendente} className="min-h-10 rounded-xl border border-line bg-surface px-3 text-sm font-semibold hover:bg-surface-2 disabled:opacity-60">
-              Outra coisa
-            </button>
+            <p className="mb-2.5 text-[15px] font-semibold">Você já comeu esta refeição?</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              <button onClick={() => registrar("sim")} disabled={pendente} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-brand px-3 text-[15px] font-semibold text-white shadow-card hover:bg-brand-strong disabled:opacity-60">
+                <Check size={18} /> Sim, comi
+              </button>
+              <button onClick={() => registrar("parcial")} disabled={pendente} className="min-h-12 rounded-2xl border border-line bg-surface px-3 text-[15px] font-semibold hover:bg-surface-2 disabled:opacity-60">
+                Comi só uma parte
+              </button>
+              <button onClick={() => registrar("nao")} disabled={pendente} className="min-h-12 rounded-2xl border border-line bg-surface px-3 text-[15px] font-semibold hover:bg-surface-2 disabled:opacity-60">
+                Comi outra coisa
+              </button>
+            </div>
           </>
         )}
       </footer>
 
       {painel === "acoes" && (
-        <Sheet titulo={r.nome} descricao={rec?.nome} onClose={fechar}>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.06em] text-muted">Trocar a refeição</p>
+        <Sheet titulo="O que você quer trocar?" descricao={`${r.nome}${rec ? ` · ${rec.nome}` : ""}`} onClose={fechar}>
+          {!r.foraDeCasa && (
+            <>
+              <p className="mb-2 text-sm font-bold">Só um alimento</p>
+              <p className="mb-2 text-[13px] text-muted">Toque no alimento que você não tem ou não quer comer.</p>
+              <ul className="mb-5 space-y-2">
+                {r.itens.map((i, k) => (
+                  <li key={k}>
+                    <Opcao titulo={FOOD_MAP[i.food]?.nome ?? i.food} apoio={`${formatMedida(i.food, i.g)} · ${Math.round(i.g)} g`} onClick={() => trocarAlimento(k)} />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p className="mb-2 text-sm font-bold">A refeição inteira</p>
+          <p className="mb-2 text-[13px] text-muted">Escolha o tipo de refeição que prefere no lugar desta.</p>
           <div className="grid grid-cols-2 gap-2">
             {CRITERIOS.map((c) => {
               const Icon = ICONE_CRITERIO[c.id];
               return (
-                <button key={c.id} onClick={() => trocarRefeicao(c.id)} className="flex min-h-14 items-center gap-2.5 rounded-2xl border border-line px-3 text-left text-sm font-semibold hover:border-brand hover:bg-brand-soft/40">
+                <button key={c.id} onClick={() => trocarRefeicao(c.id)} className="flex min-h-14 items-center gap-2.5 rounded-2xl border border-line px-3 text-left text-[15px] font-semibold hover:border-brand hover:bg-brand-soft/40">
                   <Icon size={18} className="shrink-0 text-brand" /> {ROTULO_CRITERIO[c.id]}
                 </button>
               );
             })}
           </div>
-          <p className="mb-2 mt-5 text-xs font-bold uppercase tracking-[0.06em] text-muted">Imprevistos</p>
+          <p className="mb-2 mt-5 text-sm font-bold">Imprevisto</p>
           {r.foraDeCasa ? (
             <Opcao titulo="Voltar para a refeição planejada" apoio="Desfaz a marcação de refeição fora de casa" onClick={() => start(async () => { await desfazerComerFora(r.id); fechar(); router.refresh(); })} />
           ) : (
-            <Opcao titulo={<span className="inline-flex items-center gap-2"><Store size={16} className="text-brand" /> Vou comer fora</span>} apoio="Receba uma referência de prato para o lugar escolhido" onClick={() => setPainel("fora")} />
+            <Opcao titulo={<span className="inline-flex items-center gap-2"><Store size={16} className="text-brand" /> Vou comer fora de casa</span>} apoio="Receba uma sugestão de prato para o lugar escolhido" onClick={() => setPainel("fora")} />
           )}
         </Sheet>
       )}
@@ -310,7 +375,7 @@ export function RefeicaoCard({ r, mostrarMacros = true, unidades = "ambos", comp
                   <Opcao
                     disabled={pendente}
                     titulo={o.nome}
-                    apoio={`${o.item.medida} · ${Math.round(o.item.g)} g`}
+                    apoio={`${formatMedida(o.item.food, o.item.g)} · ${Math.round(o.item.g)} g`}
                     detalhe={o.diferencas.join(" · ")}
                     onClick={() => start(async () => { await aplicarTrocaAlimento(r.id, opAli.indice, o.item); fechar(); router.refresh(); })}
                   />

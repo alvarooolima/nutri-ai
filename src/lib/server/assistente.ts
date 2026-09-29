@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FOOD_MAP, FOODS } from "@/data/foods";
 import { RECIPE_MAP } from "@/data/recipes";
-import { brl, macrosItens } from "@/lib/nutrition/foodmath";
+import { brl, formatMedida, macrosItens } from "@/lib/nutrition/foodmath";
 import { addDias, montarRefeicao, receitasPermitidas, type ContextoPlano } from "@/lib/nutrition/planner";
 import { normalizar } from "@/lib/nutrition/safety";
 import { ajustarFomeRefeicao, CRITERIOS, LOCAIS_FORA, opcoesTrocaAlimento, opcoesTrocaRefeicao, orientacaoComerFora, type CriterioRefeicao } from "@/lib/nutrition/swaps";
@@ -51,7 +51,7 @@ function proximaRefeicao(c: Ctx, tipoPreferido?: string): RefeicaoDB | undefined
 
 function resumoRefeicao(r: RefeicaoDB, esconder: boolean) {
   const m = macrosItens(r.itens);
-  const itens = r.itens.map((i) => `${FOOD_MAP[i.food]?.nome} (${i.medida})`).join(", ");
+  const itens = r.itens.map((i) => `${FOOD_MAP[i.food]?.nome} (${formatMedida(i.food, i.g)})`).join(", ");
   return `${r.nome}${r.horario ? ` ${r.horario}` : ""}: ${RECIPE_MAP[r.receitaId ?? ""]?.nome ?? "refeição"} — ${itens}${esconder ? "" : ` [~${Math.round(m.kcal)} kcal, P ${Math.round(m.p)} g]`}, custo ~${brl(m.custo)}`;
 }
 
@@ -143,8 +143,8 @@ export function responderPorRegras(c: Ctx, msg: string): RespostaAssistente {
       const r = refs[0];
       const indice = r.itens.findIndex((i) => i.food === food.id);
       const ops = opcoesTrocaAlimento(r.itens[indice], c.ctx, 3);
-      for (const o of ops) acoes.push({ tipo: "troca_alimento", rotulo: `Trocar por ${o.nome} (${o.item.medida})`, mealId: r.id, indice, item: o.item });
-      return { fonte: "regras", acoes, texto: `Sem problema. No seu ${r.nome.toLowerCase()} ${r.dia === hojeSP() ? "de hoje" : "de amanhã"}, dá para substituir ${food.nome.toLowerCase()} por:\n${ops.map((o) => `• ${o.nome}: ${o.item.medida} — ${o.diferencas.join(", ")}`).join("\n")}` };
+      for (const o of ops) acoes.push({ tipo: "troca_alimento", rotulo: `Trocar por ${o.nome} (${formatMedida(o.item.food, o.item.g)})`, mealId: r.id, indice, item: o.item });
+      return { fonte: "regras", acoes, texto: `Sem problema. No seu ${r.nome.toLowerCase()} ${r.dia === hojeSP() ? "de hoje" : "de amanhã"}, dá para substituir ${food.nome.toLowerCase()} por:\n${ops.map((o) => `• ${o.nome}: ${formatMedida(o.item.food, o.item.g)} — ${o.diferencas.join(", ")}`).join("\n")}` };
     }
   }
 
@@ -272,8 +272,8 @@ export async function responderComClaude(c: Ctx, historico: { role: "user" | "as
         const idx = Number(input.indice);
         if (!r || !r.itens[idx]) return "Item não encontrado.";
         const ops = opcoesTrocaAlimento(r.itens[idx], c.ctx, 4);
-        for (const o of ops) acoes.push({ tipo: "troca_alimento", rotulo: `${o.nome} (${o.item.medida})`, mealId: r.id, indice: idx, item: o.item });
-        return ops.map((o) => `${o.nome}: ${o.item.medida} (${o.item.g} g) — ${o.diferencas.join(", ")}`).join("\n") || "Nenhum substituto compatível.";
+        for (const o of ops) acoes.push({ tipo: "troca_alimento", rotulo: `${o.nome} (${formatMedida(o.item.food, o.item.g)})`, mealId: r.id, indice: idx, item: o.item });
+        return ops.map((o) => `${o.nome}: ${formatMedida(o.item.food, o.item.g)} (${o.item.g} g) — ${o.diferencas.join(", ")}`).join("\n") || "Nenhum substituto compatível.";
       }
       case "opcoes_por_orcamento": {
         const tipo = String(input.tipo_refeicao);

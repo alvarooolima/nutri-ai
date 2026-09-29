@@ -52,14 +52,31 @@ function fracao(n: number): string {
   return `${inteiro}${r}`;
 }
 
-/** Converte gramas em medida caseira aproximada, ex.: "2 × concha média" */
+const PLURAL: Record<string, string> = {
+  colher: "colheres", cheia: "cheias", unidade: "unidades", média: "médias", médio: "médios", concha: "conchas",
+  filé: "filés", fatia: "fatias", grossa: "grossas", pedaço: "pedaços", posta: "postas", bife: "bifes", xícara: "xícaras",
+  dente: "dentes", pote: "potes", folha: "folhas", copo: "copos", pegador: "pegadores", ramo: "ramos",
+  quadradinho: "quadradinhos", lata: "latas", drenada: "drenadas", rodela: "rodelas",
+};
+
+/** Plural em português das medidas caseiras (o que está entre parênteses fica como está) */
+export function pluralMedida(medida: string): string {
+  const [antes, ...resto] = medida.split(" (");
+  const plural = antes
+    .split(" ")
+    .map((w) => PLURAL[w] ?? w)
+    .join(" ");
+  return resto.length ? `${plural} (${resto.join(" (")}` : plural;
+}
+
+/** Converte gramas em medida caseira aproximada, em português natural: "2 conchas médias", "½ colher de sopa" */
 export function formatMedida(foodId: string, gramas: number): string {
   const f = FOOD_MAP[foodId];
   if (!f) return `${Math.round(gramas)} g`;
   const q = gramas / f.gMedida;
-  const arred = f.contavel ? Math.max(1, Math.round(q)) : Math.round(q * 4) / 4;
+  const arred = f.contavel ? Math.max(1, Math.round(q)) : Math.max(0.25, Math.round(q * 4) / 4);
   const qtd = f.contavel ? String(arred) : fracao(arred);
-  return arred === 1 ? `1 ${f.medida}` : `${qtd} × ${f.medida}`;
+  return `${qtd} ${arred > 1 ? pluralMedida(f.medida) : f.medida}`;
 }
 
 /** Arredonda gramas para valores práticos (unidades inteiras para alimentos contáveis) */

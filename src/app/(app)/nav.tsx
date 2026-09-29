@@ -53,7 +53,7 @@ export function BottomNav({ alertas = 0 }: { alertas?: number }) {
   const path = usePathname();
   const itens = [
     { href: "/inicio", nome: "Início", icon: Home },
-    { href: "/plano", nome: "Plano", icon: CalendarDays },
+    { href: "/plano", nome: "Cardápio", icon: CalendarDays },
     { href: "/registrar", nome: "Registrar", icon: Plus, destaque: true },
     { href: "/evolucao", nome: "Evolução", icon: LineChart },
     { href: "/mais", nome: "Mais", icon: Menu },

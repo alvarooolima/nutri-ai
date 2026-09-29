@@ -20,28 +20,29 @@ export function AcoesDia({ data }: { data: string }) {
       router.refresh();
     });
   const ACOES = [
-    { rotulo: "Mais fome", apoio: "+ porções", icon: Plus, fn: () => ajustarFomeDia(data, "mais") },
-    { rotulo: "Menos fome", apoio: "− porções", icon: Minus, fn: () => ajustarFomeDia(data, "menos") },
-    { rotulo: "Mais barato", apoio: "trocas equivalentes", icon: PiggyBank, fn: () => reduzirCusto() },
+    { rotulo: "Estou com mais fome hoje", apoio: "Aumenta um pouco as porções, com mais verduras e proteína", icon: Plus, fn: () => ajustarFomeDia(data, "mais") },
+    { rotulo: "Estou com menos fome hoje", apoio: "Diminui um pouco as porções, mantendo a proteína", icon: Minus, fn: () => ajustarFomeDia(data, "menos") },
+    { rotulo: "Quero gastar menos", apoio: "Troca refeições de hoje em diante por opções mais baratas e equivalentes", icon: PiggyBank, fn: () => reduzirCusto() },
   ];
   return (
-    <div className="space-y-3 border-t border-line/70 pt-4">
-      <p className="text-xs font-bold uppercase tracking-[0.06em] text-muted">Ajustar o dia</p>
-      <div className="grid grid-cols-3 gap-2" aria-busy={pendente}>
-        {ACOES.map(({ rotulo, apoio, icon: Icon, fn }) => (
-          <button
-            key={rotulo}
-            disabled={pendente}
-            onClick={() => run(fn)}
-            className="flex min-h-16 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-2xl border border-line bg-surface px-1 py-2 text-center transition hover:border-brand hover:bg-brand-soft/40 disabled:opacity-60"
-          >
-            <Icon size={18} className="text-brand" aria-hidden />
-            <span className="text-[13px] font-semibold leading-tight">{rotulo}</span>
-            <span className="text-[11px] leading-tight text-muted">{apoio}</span>
-          </button>
-        ))}
-      </div>
-      {pendente && <p className="text-xs text-muted" role="status">Ajustando o plano…</p>}
+    <div className="space-y-2" aria-busy={pendente}>
+      {ACOES.map(({ rotulo, apoio, icon: Icon, fn }) => (
+        <button
+          key={rotulo}
+          disabled={pendente}
+          onClick={() => run(fn)}
+          className="flex min-h-16 w-full items-center gap-3.5 rounded-2xl border border-line/80 bg-surface px-4 py-3 text-left shadow-card transition hover:border-brand hover:bg-brand-soft/40 disabled:opacity-60"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
+            <Icon size={20} aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[16px] font-semibold leading-snug">{rotulo}</span>
+            <span className="block text-[13px] text-muted">{apoio}</span>
+          </span>
+        </button>
+      ))}
+      {pendente && <p className="text-[15px] text-muted" role="status">Ajustando o cardápio…</p>}
       {msg && <AlertBox gravidade="info" titulo="Pronto">{msg}</AlertBox>}
     </div>
   );

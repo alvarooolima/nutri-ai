@@ -16,7 +16,7 @@ export const GRUPOS: { titulo: string; areas: Area[] }[] = [
     titulo: "Dia a dia",
     areas: [
       { href: "/inicio", nome: "Início", descricao: "Resumo do dia e próxima refeição", icon: Home },
-      { href: "/plano", nome: "Meu plano", descricao: "Cardápio, trocas e ajustes do dia", icon: CalendarDays },
+      { href: "/plano", nome: "Meu cardápio", descricao: "O que comer em cada refeição", icon: CalendarDays },
       { href: "/registrar", nome: "Registrar", descricao: "Refeições, peso, sono e energia", icon: ClipboardList },
       { href: "/sintomas", nome: "Sintomas", descricao: "Diário e padrões observados", icon: Stethoscope },
       { href: "/assistente", nome: "Assistente", descricao: "Ajuda para imprevistos", icon: MessageCircle },

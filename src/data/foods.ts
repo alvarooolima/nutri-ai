@@ -91,7 +91,7 @@ export const FOODS: Food[] = [
   food("abobora", "Abóbora cabotiá cozida", "Hortifrúti", "hortalica", [48, 1.4, 10.8, 0.7, 2.5, 0], "pedaço médio", 60, 5, 1, [...V, "brasileiro", "japones"], [], FONTE_TACO, { nomeCompra: "Abóbora cabotiá" }),
   food("alface", "Alface crespa", "Hortifrúti", "hortalica", [11, 1.3, 1.7, 0.2, 1.8, 3], "folhas (prato de sobremesa)", 30, 14, 1, [...V, "brasileiro", "mediterraneo"], [], FONTE_TACO),
   food("tomate", "Tomate", "Hortifrúti", "hortalica", [15, 1.1, 3.1, 0.2, 1.2, 1], "unidade média", 100, 8, 1, [...V, "brasileiro", "mediterraneo"], [], FONTE_TACO),
-  food("pepino", "Pepino", "Hortifrúti", "hortalica", [10, 0.9, 2.0, 0.0, 1.1, 0], "fatias (meia unidade)", 60, 6, 1, [...V, "japones", "mediterraneo"], [], FONTE_TACO),
+  food("pepino", "Pepino", "Hortifrúti", "hortalica", [10, 0.9, 2.0, 0.0, 1.1, 0], "rodela", 10, 6, 1, [...V, "japones", "mediterraneo"], [], FONTE_TACO),
   food("repolho", "Repolho cru", "Hortifrúti", "hortalica", [17, 0.9, 3.9, 0.1, 1.9, 4], "colher de sopa (fatiado)", 15, 5, 1, [...V, "brasileiro", "japones"], [], FONTE_TACO, { nomeCompra: "Repolho" }),
   food("couve", "Couve refogada", "Hortifrúti", "hortalica", [90, 1.7, 8.7, 6.6, 5.7, 11], "colher de sopa", 20, 16, 1, [...V, "brasileiro"], [], FONTE_TACO, { nomeCompra: "Couve-manteiga" }),
   food("espinafre", "Espinafre refogado", "Hortifrúti", "hortalica", [67, 2.7, 4.2, 5.4, 2.5, 101], "colher de sopa", 25, 20, 1, [...V, "japones", "mediterraneo"], [], FONTE_TACO, { nomeCompra: "Espinafre" }),

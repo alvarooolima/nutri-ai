@@ -44,6 +44,8 @@ export async function registrarRefeicao(input: {
     }
   }
   const agora = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date());
+  // uma refeição do plano tem no máximo um registro: responder de novo substitui a resposta anterior
+  if (v.mealId) await supabase.from("food_logs").delete().eq("user_id", user.id).eq("meal_id", v.mealId);
   const { error } = await supabase.from("food_logs").insert({
     user_id: user.id,
     data: v.data ?? hojeSP(),
@@ -56,6 +58,15 @@ export async function registrarRefeicao(input: {
     saciedade_depois: v.saciedade_depois ?? null,
   });
   if (error) return { ok: false, erro: error.message };
+  revalidatePath("/", "layout");
+  return { ok: true, hora: v.hora ?? agora };
+}
+
+/** Desfaz o registro de uma refeição do plano */
+export async function desfazerRegistroRefeicao(mealId: string) {
+  z.string().uuid().parse(mealId);
+  const { supabase, user } = await requireUser();
+  await supabase.from("food_logs").delete().eq("user_id", user.id).eq("meal_id", mealId);
   revalidatePath("/", "layout");
   return { ok: true };
 }
