@@ -22,10 +22,15 @@ export async function createClient() {
   });
 }
 
-/** Retorna o cliente e o usuário autenticado ou redireciona para o login */
+/**
+ * Retorna o cliente e o usuário autenticado ou redireciona para o login.
+ * Usa getClaims: o JWT (ES256) é verificado localmente com as chaves públicas do projeto,
+ * sem uma ida ao servidor de autenticação a cada página. O acesso aos dados continua protegido por RLS.
+ */
 export const requireUser = cache(async () => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/login");
-  return { supabase, user: data.user };
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) redirect("/login");
+  return { supabase, user: { id: claims.sub, email: (claims.email as string | undefined) ?? "" } };
 });

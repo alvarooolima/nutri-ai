@@ -7,9 +7,9 @@ const TABELAS = ["goals", "lifestyle", "exercises", "food_preferences", "budget"
 /** Exportação de dados do titular (LGPD, art. 18) — JSON com todos os dados, incluindo os de saúde decifrados */
 export async function GET() {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
-  const uid = auth.user.id;
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
+  const uid = auth.claims.sub;
 
   const out: Record<string, unknown> = { exportado_em: new Date().toISOString(), formato: "NUTRI.AI export v1" };
   const { data: u } = await supabase.from("users").select("*").eq("id", uid).single();

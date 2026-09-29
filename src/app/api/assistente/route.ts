@@ -14,9 +14,9 @@ const corpo = z.union([
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
-  const uid = auth.user.id;
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) return NextResponse.json({ erro: "não autenticado" }, { status: 401 });
+  const uid = auth.claims.sub;
   const parsed = corpo.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ erro: "requisição inválida" }, { status: 400 });
 

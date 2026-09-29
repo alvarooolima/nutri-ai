@@ -17,20 +17,21 @@ export function hojeSP(): string {
 }
 
 export async function sincronizarAlertas(supabase: SupabaseClient, userId: string, alertas: Alerta[]) {
-  const { data: existentes } = await supabase.from("alerts").select("regra,status").eq("user_id", userId);
+  const { data: existentes } = await supabase.from("alerts").select("regra,status,mensagem,acao_recomendada,gravidade").eq("user_id", userId);
   const atuais = new Set(alertas.map((a) => a.regra));
-  const ja = new Map((existentes ?? []).map((e) => [e.regra as string, e.status as string]));
-  const novos = alertas.filter((a) => !ja.has(a.regra) || ja.get(a.regra) === "resolvido");
-  if (novos.length)
-    await supabase.from("alerts").upsert(
-      novos.map((a) => ({ user_id: userId, ...a, status: "ativo" })),
-      { onConflict: "user_id,regra" },
-    );
-  // atualiza texto dos que continuam valendo
-  for (const a of alertas.filter((x) => ja.has(x.regra) && ja.get(x.regra) !== "resolvido"))
-    await supabase.from("alerts").update({ mensagem: a.mensagem, acao_recomendada: a.acao_recomendada, gravidade: a.gravidade }).eq("user_id", userId).eq("regra", a.regra);
-  const resolver = [...ja.keys()].filter((r) => !atuais.has(r));
-  if (resolver.length) await supabase.from("alerts").update({ status: "resolvido" }).eq("user_id", userId).in("regra", resolver);
+  const ja = new Map((existentes ?? []).map((e) => [e.regra as string, e]));
+  const ops: PromiseLike<unknown>[] = [];
+  const novos = alertas.filter((a) => !ja.has(a.regra) || ja.get(a.regra)!.status === "resolvido");
+  if (novos.length) ops.push(supabase.from("alerts").upsert(novos.map((a) => ({ user_id: userId, ...a, status: "ativo" })), { onConflict: "user_id,regra" }));
+  // atualiza apenas os que continuam valendo e cujo texto mudou
+  for (const a of alertas) {
+    const e = ja.get(a.regra);
+    if (e && e.status !== "resolvido" && (e.mensagem !== a.mensagem || e.acao_recomendada !== a.acao_recomendada || e.gravidade !== a.gravidade))
+      ops.push(supabase.from("alerts").update({ mensagem: a.mensagem, acao_recomendada: a.acao_recomendada, gravidade: a.gravidade }).eq("user_id", userId).eq("regra", a.regra));
+  }
+  const resolver = [...ja.entries()].filter(([r, e]) => !atuais.has(r) && e.status !== "resolvido").map(([r]) => r);
+  if (resolver.length) ops.push(supabase.from("alerts").update({ status: "resolvido" }).eq("user_id", userId).in("regra", resolver));
+  await Promise.all(ops);
 }
 
 /** Dados do acompanhamento usados pela segurança (perda de peso rápida, sintomas de alarme) */
