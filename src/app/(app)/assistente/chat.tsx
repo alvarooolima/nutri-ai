@@ -81,7 +81,7 @@ export function Chat({ inicial }: { inicial: Msg[] }) {
         <div ref={fim} />
       </div>
       <div className="sticky bottom-20 mt-4 space-y-2 bg-bg pt-2 lg:bottom-0">
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="-mx-4 flex gap-2 scroll-x px-4 pb-1">
           {SUGESTOES.map((s) => (
             <button key={s} onClick={() => enviar(s)} className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium hover:border-brand">
               {s}

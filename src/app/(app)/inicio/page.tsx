@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, CalendarDays, ChefHat, ClipboardList, LineChart, RefreshCcw, ShoppingBasket, Soup } from "lucide-react";
+import { ArrowRight, ChefHat, RefreshCcw, ShoppingBasket, Soup, Stethoscope } from "lucide-react";
 import { AlertBox, Card, LinkButton } from "@/components/ui";
 import { RefeicaoCard } from "@/components/plano/refeicao-card";
 import { macrosItens } from "@/lib/nutrition/foodmath";
@@ -15,14 +15,15 @@ function saudacao() {
   return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
 }
 
-const CARDS = [
-  { href: "/plano", nome: "Meu Plano", icon: CalendarDays, cor: "bg-brand-soft text-brand-strong" },
+const dataLonga = (d: string) =>
+  new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(d + "T12:00:00Z"));
+
+// Hick: poucos atalhos, só os que não estão na barra inferior
+const ATALHOS = [
   { href: "/compras", nome: "Compras", icon: ShoppingBasket, cor: "bg-accent-soft text-accent" },
-  { href: "/evolucao", nome: "Evolução", icon: LineChart, cor: "bg-info-soft text-info" },
-  { href: "/registrar", nome: "Registros", icon: ClipboardList, cor: "bg-warn-soft text-warn" },
   { href: "/receitas", nome: "Receitas", icon: ChefHat, cor: "bg-brand-soft text-brand-strong" },
-  { href: "/evidencias", nome: "Evidências", icon: BookOpen, cor: "bg-info-soft text-info" },
-  { href: "/revisao", nome: "Ajustar", icon: RefreshCcw, cor: "bg-accent-soft text-accent" },
+  { href: "/sintomas", nome: "Sintoma", icon: Stethoscope, cor: "bg-danger-soft text-danger" },
+  { href: "/revisao", nome: "Ajustar", icon: RefreshCcw, cor: "bg-info-soft text-info" },
 ];
 
 export default async function Inicio() {
@@ -33,91 +34,123 @@ export default async function Inicio() {
     planoAtivo(supabase, user.id),
     supabase.from("tracking").select("*").eq("user_id", user.id).eq("data", hoje).maybeSingle(),
     supabase.from("alerts").select("id,gravidade,mensagem,acao_recomendada").eq("user_id", user.id).eq("status", "ativo").eq("gravidade", "importante").limit(2),
-    supabase.from("food_logs").select("meal_id,seguiu_plano").eq("user_id", user.id).eq("data", hoje),
+    supabase.from("food_logs").select("meal_id").eq("user_id", user.id).eq("data", hoje),
   ]);
   const refs = plano ? await refeicoesDoPlano(supabase, plano.id, hoje, hoje) : [];
   const prefs = (u?.preferencias_app ?? {}) as { mostrarMacros?: boolean; unidades?: string };
   const esconder = Boolean((plano?.consideracoes as { esconderCalorias?: boolean } | null)?.esconderCalorias);
   const mostrarMacros = prefs.mostrarMacros !== false && !esconder;
-  const registradas = new Set((logs ?? []).map((l) => l.meal_id).filter(Boolean));
-  const pendentes = refs.filter((r) => !registradas.has(r.id));
+  const logados = new Set((logs ?? []).map((l) => l.meal_id).filter(Boolean));
+  const registradas = refs.filter((r) => logados.has(r.id)).length;
+  const pendentes = refs.filter((r) => !logados.has(r.id));
+  const proxima = pendentes[0];
   const kcalHoje = macrosItens(refs.flatMap((r) => r.itens)).kcal;
-  const outubro = hoje.slice(5, 7) === "10";
+  const futuro = plano && !refs.length && plano.data_inicio > hoje;
+  const nome = u?.nome?.split(" ")[0] || "você";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <section>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {saudacao()}, {u?.nome?.split(" ")[0] || "você"}. Como você está hoje?
+    <div className="mx-auto max-w-3xl space-y-8">
+      <header>
+        <p className="text-xs font-bold uppercase tracking-[0.08em] text-brand">{dataLonga(hoje)}</p>
+        <h1 className="mt-1 text-[26px] font-bold leading-tight tracking-tight sm:text-[30px]">
+          {saudacao()}, {nome}. <span className="text-muted">Como você está hoje?</span>
         </h1>
-        <CheckIn inicial={{ energia: track?.energia ?? null, fome: track?.fome ?? null, sono: track?.sono ?? null, agua: track?.agua_ml ?? 0 }} />
-      </section>
+      </header>
 
       {(alertas ?? []).map((a) => (
         <AlertBox key={a.id} gravidade="importante">
-          {a.mensagem} <Link href="/alertas" className="font-semibold underline">Ver detalhes</Link>
+          {a.mensagem}{" "}
+          <Link href="/alertas" className="font-semibold text-danger underline underline-offset-2">
+            Ver o que fazer
+          </Link>
         </AlertBox>
       ))}
 
-      <section>
-        <div className="mb-3 flex items-end justify-between">
+      {/* Ponto focal: o que fazer agora */}
+      <section className="space-y-3" aria-labelledby="hoje">
+        <div className="flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Hoje</h2>
-            {plano && mostrarMacros && <p className="text-sm text-muted">~{Math.round(kcalHoje).toLocaleString("pt-BR")} kcal planejadas · {registradas.size}/{refs.length} refeições registradas</p>}
+            <h2 id="hoje" className="text-lg font-bold tracking-tight">
+              {proxima ? "Próxima refeição" : "Hoje"}
+            </h2>
+            {refs.length > 0 && (
+              <p className="text-[13px] text-muted">
+                {registradas} de {refs.length} refeições registradas{mostrarMacros && ` · ~${Math.round(kcalHoje).toLocaleString("pt-BR")} kcal planejadas`}
+              </p>
+            )}
           </div>
-          {plano && <Link href="/plano" className="text-sm font-semibold text-brand">Ver plano</Link>}
+          {plano && (
+            <Link href="/plano" className="inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-brand">
+              Dia completo <ArrowRight size={16} />
+            </Link>
+          )}
         </div>
-        {!plano ? (
-          <Card>
-            <p className="font-semibold">Você ainda não tem um plano ativo.</p>
-            <LinkButton href="/plano" className="mt-3">Gerar plano</LinkButton>
-          </Card>
-        ) : refs.length === 0 ? (
-          <Card>
-            <p className="font-semibold">Seu plano atual não cobre hoje.</p>
-            <p className="text-sm text-muted">Gere um novo período para continuar.</p>
-            <LinkButton href="/plano" className="mt-3">Gerar novo período</LinkButton>
-          </Card>
-        ) : pendentes.length === 0 ? (
-          <Card className="bg-brand-soft">
-            <p className="font-semibold text-brand-strong">Todas as refeições de hoje foram registradas. 🌿</p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {pendentes.slice(0, 2).map((r) => (
-              <RefeicaoCard key={r.id} r={r} mostrarMacros={mostrarMacros} unidades={prefs.unidades} compacto />
+        {refs.length > 0 && (
+          <div className="flex gap-1.5" aria-hidden>
+            {refs.map((r) => (
+              <span key={r.id} className={`h-1.5 flex-1 rounded-full ${logados.has(r.id) ? "bg-brand" : "bg-line"}`} />
             ))}
           </div>
         )}
+        {!plano ? (
+          <Card>
+            <p className="font-semibold">Você ainda não tem um plano ativo.</p>
+            <p className="mt-1 text-sm text-muted">Leva alguns segundos e usa o perfil que você já preencheu.</p>
+            <LinkButton href="/plano" className="mt-4">Gerar meu plano</LinkButton>
+          </Card>
+        ) : futuro ? (
+          <Card>
+            <p className="font-semibold">Seu plano começa {dataLonga(plano.data_inicio)}.</p>
+            <p className="mt-1 text-sm text-muted">Enquanto isso, confira o cardápio e faça as compras da primeira semana.</p>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:flex">
+              <LinkButton href={`/plano?dia=${plano.data_inicio}`}>Ver o 1º dia</LinkButton>
+              <LinkButton href="/compras" variante="secundario">Compras</LinkButton>
+            </div>
+          </Card>
+        ) : !refs.length ? (
+          <Card>
+            <p className="font-semibold">Seu plano atual terminou.</p>
+            <p className="mt-1 text-sm text-muted">Gere um novo período para continuar — seu histórico fica salvo.</p>
+            <LinkButton href="/plano" className="mt-4">Gerar novo período</LinkButton>
+          </Card>
+        ) : !proxima ? (
+          <Card className="border-brand/20 bg-brand-soft">
+            <p className="font-semibold text-brand-strong">Todas as refeições de hoje foram registradas. 🌿</p>
+            <p className="mt-1 text-sm text-brand-strong/80">Que tal registrar como foi o dia — sono, energia e peso?</p>
+            <LinkButton href="/registrar" variante="secundario" className="mt-4">Registrar o dia</LinkButton>
+          </Card>
+        ) : (
+          <RefeicaoCard r={proxima} mostrarMacros={mostrarMacros} unidades={prefs.unidades} compacto />
+        )}
       </section>
 
+      <CheckIn inicial={{ energia: track?.energia ?? null, fome: track?.fome ?? null, sono: track?.sono ?? null, agua: track?.agua_ml ?? 0 }} />
+
       <section aria-label="Atalhos">
-        <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {CARDS.map(({ href, nome, icon: Icon, cor }) => (
+        <ul className="grid grid-cols-4 gap-2 sm:gap-3">
+          {ATALHOS.map(({ href, nome: n, icon: Icon, cor }) => (
             <li key={href}>
-              <Link href={href} className="flex h-full flex-col items-start gap-2 rounded-3xl border border-line bg-surface p-4 hover:border-brand/40">
+              <Link href={href} className="flex h-full min-h-22 flex-col items-center justify-center gap-2 rounded-3xl border border-line/80 bg-surface p-3 text-center shadow-card transition hover:border-brand/40">
                 <span className={`flex size-10 items-center justify-center rounded-2xl ${cor}`}>
                   <Icon size={20} />
                 </span>
-                <span className="text-sm font-semibold">{nome}</span>
+                <span className="text-[13px] font-semibold leading-tight">{n}</span>
               </Link>
             </li>
           ))}
-          <li>
-            <Link href="/sintomas" className="flex h-full flex-col items-start gap-2 rounded-3xl border border-line bg-surface p-4 hover:border-brand/40">
-              <span className="flex size-10 items-center justify-center rounded-2xl bg-danger-soft text-danger">+</span>
-              <span className="text-sm font-semibold">Sintoma</span>
-            </Link>
-          </li>
         </ul>
       </section>
 
-      <Link href="/desafio" className="block rounded-3xl bg-accent-soft p-5 hover:opacity-95">
-        <p className="flex items-center gap-2 text-sm font-semibold text-accent">
-          <Soup size={16} /> {outubro ? "Outubro é mês do desafio" : "Projeto especial"}
-        </p>
-        <p className="mt-1 text-lg font-bold">Desafio 31 dias — Alimentação Japonesa</p>
-        <p className="text-sm text-ink/75">Cardápio de 31 dias, compras semanais, preparo antecipado e controle de sódio.</p>
+      <Link href="/desafio" className="group flex items-center gap-4 rounded-3xl bg-accent-soft p-5 transition hover:brightness-[0.98]">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-accent shadow-card">
+          <Soup size={24} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-bold uppercase tracking-[0.08em] text-accent">{hoje.slice(5, 7) === "10" ? "Outubro é mês do desafio" : "Projeto especial"}</span>
+          <span className="mt-0.5 block text-base font-bold leading-snug">Desafio 31 dias — Alimentação Japonesa</span>
+          <span className="block text-[13px] text-ink/70">Cardápio, compras semanais e controle de sódio.</span>
+        </span>
+        <ArrowRight size={20} className="shrink-0 text-accent transition group-hover:translate-x-0.5" aria-hidden />
       </Link>
     </div>
   );

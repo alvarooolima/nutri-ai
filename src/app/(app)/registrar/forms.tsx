@@ -37,10 +37,10 @@ export function FormRefeicao({ planejadas }: { planejadas: { id: string; nome: s
 
   return (
     <Card className="space-y-4">
-      <h2 className="font-bold">Refeição</h2>
+      <div><h2 className="text-lg font-bold tracking-tight">O que você comeu?</h2><p className="text-[13px] text-muted">Toque em uma refeição do plano ou descreva livremente.</p></div>
       {planejadas.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-semibold">Comi o que estava no plano:</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.06em] text-muted">Do seu plano de hoje</p>
           <div className="flex flex-wrap gap-2">
             {planejadas.map((p) => (
               <Button
@@ -59,7 +59,7 @@ export function FormRefeicao({ planejadas }: { planejadas: { id: string; nome: s
       <Field label="Qual refeição?">
         <Chips opcoes={REFS} valor={v.refeicao ? [v.refeicao] : []} onChange={(x) => setV({ ...v, refeicao: x[0] ?? "" })} multiplo={false} />
       </Field>
-      <Field label="O que você comeu?">
+      <Field label="Descrição">
         <Textarea rows={2} value={v.descricao} onChange={(e) => setV({ ...v, descricao: e.target.value })} placeholder="ex.: arroz, feijão, frango e salada" />
       </Field>
       <Field label="Em relação ao plano">
@@ -88,7 +88,7 @@ export function FormDia({ inicial }: { inicial: Track }) {
   const [pendente, start] = useTransition();
   const [ok, setOk] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const s = (x: number | null | undefined) => (x === null || x === undefined ? "" : String(x));
+  const s = (x: number | null | undefined) => (x === null || x === undefined ? "" : String(x).replace(".", ","));
   const [v, setV] = useState({
     peso: s(inicial.peso), cintura: s(inicial.cintura), quadril: s(inicial.quadril), horas_sono: s(inicial.horas_sono), adesao: s(inicial.adesao), exercicio_min: s(inicial.exercicio_min),
     energia: inicial.energia ?? null, fome: inicial.fome ?? null, saciedade: inicial.saciedade ?? null, sono: inicial.sono ?? null, digestao: inicial.digestao ?? null,
@@ -97,23 +97,34 @@ export function FormDia({ inicial }: { inicial: Track }) {
   const set = (k: keyof typeof v) => (e: { target: { value: string } }) => setV({ ...v, [k]: e.target.value });
 
   return (
-    <Card className="space-y-4">
-      <h2 className="font-bold">Como foi o dia</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Field label="Peso (kg)"><Input inputMode="decimal" value={v.peso} onChange={set("peso")} /></Field>
-        <Field label="Cintura (cm)"><Input inputMode="decimal" value={v.cintura} onChange={set("cintura")} /></Field>
-        <Field label="Quadril (cm)"><Input inputMode="decimal" value={v.quadril} onChange={set("quadril")} /></Field>
-        <Field label="Horas de sono"><Input inputMode="decimal" value={v.horas_sono} onChange={set("horas_sono")} /></Field>
-        <Field label="Exercício (min)"><Input inputMode="numeric" value={v.exercicio_min} onChange={set("exercicio_min")} /></Field>
-        <Field label="Adesão ao plano (%)"><Input inputMode="numeric" value={v.adesao} onChange={set("adesao")} placeholder="0–100" /></Field>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {([["energia", "Energia"], ["fome", "Fome"], ["saciedade", "Saciedade"], ["sono", "Qualidade do sono"], ["digestao", "Digestão"]] as const).map(([k, t]) => (
-          <Field key={k} label={`${t} (1–5)`}>
-            <Escala5 rotulo={t} valor={v[k]} onChange={(x) => setV({ ...v, [k]: x })} />
-          </Field>
-        ))}
-      </div>
+    <Card className="space-y-6">
+      <div><h2 className="text-lg font-bold tracking-tight">Como foi o seu dia?</h2><p className="text-[13px] text-muted">Preencha só o que quiser — tudo é opcional.</p></div>
+      <fieldset className="space-y-3">
+        <legend className="mb-2 text-xs font-bold uppercase tracking-[0.06em] text-muted">Medidas</legend>
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="Peso (kg)"><Input inputMode="decimal" value={v.peso} onChange={set("peso")} /></Field>
+          <Field label="Cintura (cm)"><Input inputMode="decimal" value={v.cintura} onChange={set("cintura")} /></Field>
+          <Field label="Quadril (cm)"><Input inputMode="decimal" value={v.quadril} onChange={set("quadril")} /></Field>
+        </div>
+      </fieldset>
+      <fieldset className="space-y-3">
+        <legend className="mb-2 text-xs font-bold uppercase tracking-[0.06em] text-muted">Sono, atividade e plano</legend>
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="Sono (h)"><Input inputMode="decimal" value={v.horas_sono} onChange={set("horas_sono")} /></Field>
+          <Field label="Treino (min)"><Input inputMode="numeric" value={v.exercicio_min} onChange={set("exercicio_min")} /></Field>
+          <Field label="Adesão (%)"><Input inputMode="numeric" value={v.adesao} onChange={set("adesao")} placeholder="0–100" /></Field>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="mb-2 text-xs font-bold uppercase tracking-[0.06em] text-muted">Como você se sentiu (1 = baixo · 5 = alto)</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {([["energia", "Energia"], ["fome", "Fome"], ["saciedade", "Saciedade"], ["sono", "Qualidade do sono"], ["digestao", "Digestão"]] as const).map(([k, t]) => (
+            <Field key={k} label={t}>
+              <Escala5 rotulo={t} valor={v[k]} onChange={(x) => setV({ ...v, [k]: x })} />
+            </Field>
+          ))}
+        </div>
+      </fieldset>
       {erro && <AlertBox gravidade="importante">{erro}</AlertBox>}
       {ok && <p className="text-sm font-medium text-brand-strong" role="status">Dia registrado.</p>}
       <Button
@@ -139,16 +150,19 @@ export function FormDia({ inicial }: { inicial: Track }) {
   );
 }
 
-export function RegistroItem({ id, tabela, titulo, texto }: { id: string; tabela: "food_logs" | "symptoms"; titulo: string; texto: string }) {
+export function RegistroItem({ id, tabela, titulo, texto, selo }: { id: string; tabela: "food_logs" | "symptoms"; titulo: string; texto: string; selo?: string }) {
   const router = useRouter();
   const [pendente, start] = useTransition();
   return (
-    <li className="flex items-start justify-between gap-3 py-2.5 text-sm">
-      <div>
-        <p className="font-semibold">{titulo}</p>
-        <p className="text-muted">{texto}</p>
+    <li className={cx("flex items-start justify-between gap-3 py-3 text-sm", pendente && "opacity-50")}>
+      <div className="min-w-0">
+        <p className="flex flex-wrap items-center gap-2 font-semibold">
+          {titulo}
+          {selo && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-semibold text-brand-strong">{selo}</span>}
+        </p>
+        {texto && <p className="mt-0.5 text-muted">{texto}</p>}
       </div>
-      <button onClick={() => start(async () => { await excluirRegistro(tabela, id); router.refresh(); })} disabled={pendente} className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-danger-soft hover:text-danger" aria-label="Excluir registro">
+      <button onClick={() => start(async () => { await excluirRegistro(tabela, id); router.refresh(); })} disabled={pendente} className="-mr-2 flex size-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-danger-soft hover:text-danger" aria-label={`Excluir registro: ${titulo}`}>
         <Trash2 size={16} />
       </button>
     </li>

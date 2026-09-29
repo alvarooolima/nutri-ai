@@ -16,7 +16,7 @@ export function EditorPerfil({ perfil, aba }: { perfil: PerfilCompleto; aba: num
   const C = ETAPAS[atual].C;
   return (
     <>
-      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="-mx-4 mb-4 flex gap-2 scroll-x px-4 pb-1">
         {ABAS.map((i) => (
           <button key={i} onClick={() => { setAtual(i); setSalvo(false); }} className={cx("shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold", atual === i ? "border-brand bg-brand text-white" : "border-line bg-surface")}>
             {ETAPAS[i].nome}

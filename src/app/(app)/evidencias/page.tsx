@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FONTE_MAP, FONTES } from "@/data/sources";
+import { BookOpen, ChevronDown } from "lucide-react";
 import { Badge, Card, Empty, LinkButton, PageHeader } from "@/components/ui";
 import { ROTULO_TIPO, type TipoRecomendacao } from "@/lib/nutrition/evidence";
 import { planoAtivo } from "@/lib/server/planos";
@@ -40,7 +41,7 @@ export default async function Evidencias() {
         ))}
       </div>
       {!recs?.length ? (
-        <Empty titulo="Gere um plano para ver as justificativas" acao={<LinkButton href="/plano">Ir para o plano</LinkButton>} />
+        <Empty icon={BookOpen} titulo="Gere um plano para ver as justificativas" acao={<LinkButton href="/plano">Ir para o plano</LinkButton>} />
       ) : (
         recs.map((r) => (
           <Card key={r.id} className="space-y-3">
@@ -56,7 +57,7 @@ export default async function Evidencias() {
             {r.dados_usuario && Object.keys(r.dados_usuario).length > 0 && (
               <details className="text-sm">
                 <summary className="cursor-pointer font-semibold">Seus dados usados</summary>
-                <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded-xl bg-surface-2 p-3 text-xs text-muted">{JSON.stringify(r.dados_usuario, null, 2)}</pre>
+                <pre className="mt-1 scroll-x whitespace-pre-wrap rounded-xl bg-surface-2 p-3 text-xs text-muted">{JSON.stringify(r.dados_usuario, null, 2)}</pre>
               </details>
             )}
             {r.scientific_source_ids?.length > 0 && (
@@ -78,21 +79,26 @@ export default async function Evidencias() {
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">{calc.formulas.map((f) => <li key={f}>{f}</li>)}</ul>
         </Card>
       )}
-      <Card>
-        <h2 className="font-bold">Biblioteca de referências</h2>
-        <p className="text-sm text-muted">Priorizamos diretrizes oficiais, consensos, revisões sistemáticas e ensaios clínicos. Nenhum estudo isolado é tratado como prova definitiva.</p>
-        <ul className="mt-3 space-y-3">
+      <details className="group rounded-3xl border border-line/80 bg-surface shadow-card">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3">
+          <span>
+            <span className="block font-bold">Biblioteca de referências · {FONTES.length}</span>
+            <span className="block text-[13px] text-muted">Diretrizes, consensos, revisões e ensaios — nenhum estudo isolado é tratado como prova definitiva.</span>
+          </span>
+          <ChevronDown size={20} className="shrink-0 text-muted transition group-open:rotate-180" aria-hidden />
+        </summary>
+        <ul className="space-y-3 border-t border-line/70 p-5">
           {FONTES.map((f) => (
-            <li key={f.id} className="rounded-2xl bg-surface-2 p-3 text-sm">
-              <p className="font-semibold">{f.titulo}</p>
-              <p className="text-xs text-muted">{f.autores} · {f.periodico} · {f.ano}{f.doi && ` · DOI ${f.doi}`}</p>
-              <p className="mt-1"><span className="font-medium">Tipo:</span> {f.tipo} · <span className="font-medium">População:</span> {f.populacao}</p>
+            <li key={f.id} className="rounded-2xl bg-surface-2 p-3.5 text-sm">
+              <p className="font-semibold leading-snug">{f.titulo}</p>
+              <p className="mt-0.5 text-xs text-muted">{f.autores} · {f.periodico} · {f.ano}{f.doi && ` · DOI ${f.doi}`}</p>
+              <p className="mt-2"><span className="font-medium">Tipo:</span> {f.tipo} · <span className="font-medium">População:</span> {f.populacao}</p>
               <p><span className="font-medium">Resultado:</span> {f.resultado}</p>
               <p className="text-muted"><span className="font-medium">Limitações:</span> {f.limitacoes}</p>
             </li>
           ))}
         </ul>
-      </Card>
+      </details>
     </div>
   );
 }

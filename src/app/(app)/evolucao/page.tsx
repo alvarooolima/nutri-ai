@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Card, Empty, LinkButton, PageHeader, Stat } from "@/components/ui";
+import { LineChart } from "lucide-react";
+import { Card, Empty, LinkButton, PageHeader, Segmentos, Stat } from "@/components/ui";
 import { addDias } from "@/lib/nutrition/planner";
 import { tendencia } from "@/lib/nutrition/review";
 import { hojeSP } from "@/lib/server/planos";
@@ -49,18 +50,10 @@ export default async function Evolucao({ searchParams }: PageProps<"/evolucao">)
       <PageHeader
         titulo="Evolução"
         subtitulo="Peso é só um dos indicadores. Energia, fome, sono, sintomas e adesão contam tanto quanto."
-        acao={
-          <div className="flex gap-1 rounded-2xl bg-surface p-1 text-sm">
-            {[7, 30, 90].map((p) => (
-              <a key={p} href={`/evolucao?periodo=${p}`} className={`rounded-xl px-3 py-1.5 font-semibold ${dias === p ? "bg-brand text-white" : "text-muted"}`}>
-                {p} dias
-              </a>
-            ))}
-          </div>
-        }
+        acao={<Segmentos ativo={String(dias)} itens={[7, 30, 90].map((p) => ({ id: String(p), rotulo: `${p} dias`, href: `/evolucao?periodo=${p}` }))} />}
       />
       {!temDados ? (
-        <Empty titulo="Ainda sem registros" texto="Registre peso, medidas, fome, energia e refeições para ver sua evolução." acao={<LinkButton href="/registrar">Registrar agora</LinkButton>} />
+        <Empty icon={LineChart} titulo="Ainda sem registros" texto="Registre peso, medidas, fome, energia e refeições para ver sua evolução." acao={<LinkButton href="/registrar">Registrar agora</LinkButton>} />
       ) : (
         <>
           <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">

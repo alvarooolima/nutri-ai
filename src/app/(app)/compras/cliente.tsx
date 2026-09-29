@@ -14,13 +14,13 @@ export function GerarLista({ semanas }: { semanas: { de: string; ate: string }[]
   const [pendente, start] = useTransition();
   return (
     <div className="flex flex-wrap gap-2">
-      <Select value={sel} onChange={(e) => setSel(Number(e.target.value))} className="w-auto flex-1" aria-label="Semana">
+      <Select value={sel} onChange={(e) => setSel(Number(e.target.value))} className="min-w-0 flex-1 sm:max-w-xs" aria-label="Semana">
         {semanas.map((s, i) => (
-          <option key={s.de} value={i}>Semana {fmt(s.de)} a {fmt(s.ate)}</option>
+          <option key={s.de} value={i}>{fmt(s.de)} a {fmt(s.ate)}</option>
         ))}
       </Select>
       <Button variante="suave" disabled={pendente} onClick={() => start(async () => { await gerarListaCompras(semanas[sel].de, semanas[sel].ate); })}>
-        <RefreshCw size={16} className={pendente ? "animate-spin" : ""} /> Gerar/atualizar lista
+        <RefreshCw size={16} className={pendente ? "animate-spin" : ""} /> Atualizar
       </Button>
     </div>
   );
@@ -31,7 +31,7 @@ export function ItemLista({ listaId, item }: { listaId: string; item: ItemCompra
   const [, start] = useTransition();
   return (
     <li>
-      <label className="flex min-h-12 cursor-pointer items-center gap-3 px-5 py-2.5">
+      <label className={cx("flex min-h-13 cursor-pointer items-center gap-3 px-5 py-2.5 transition hover:bg-surface-2/60", comprado && "bg-surface-2/40")}>
         <input
           type="checkbox"
           checked={comprado}

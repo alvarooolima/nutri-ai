@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { FOODS } from "@/data/foods";
 import { MODOS } from "@/lib/nutrition/planner";
@@ -21,10 +21,11 @@ export function Chips<T extends string>({ opcoes, valor, onChange, multiplo = tr
             aria-pressed={ativo}
             onClick={() => onChange(multiplo ? (ativo ? valor.filter((v) => v !== o.id) : [...valor, o.id]) : [o.id])}
             className={cx(
-              "min-h-10 rounded-full border px-3.5 py-1.5 text-sm font-medium transition",
-              ativo ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink hover:border-brand/40",
+              "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition",
+              ativo ? "border-brand bg-brand text-white shadow-card" : "border-line bg-surface text-ink hover:border-brand/50",
             )}
           >
+            {ativo && <Check size={15} aria-hidden />}
             {o.nome}
           </button>
         );
@@ -53,15 +54,16 @@ function Escala({ valor, onChange, rotulos }: { valor: number | null; onChange: 
 
 function Rodape({ salvar, pendente, erro, rotulo = "Salvar e continuar", voltar }: { salvar: () => void; pendente: boolean; erro: string | null; rotulo?: string; voltar?: () => void }) {
   return (
-    <div className="mt-6 space-y-3">
+    <div className="sticky bottom-[calc(var(--nav-h,0px)+12px)] z-10 mt-8 space-y-3">
       {erro && <AlertBox gravidade="importante" titulo="Não foi possível salvar">{erro}</AlertBox>}
-      <div className="flex gap-3">
+      {/* ação principal fixa e ao alcance do polegar (Fitts); voltar é secundário e menor */}
+      <div className="flex gap-2 rounded-3xl border border-line/80 bg-surface/95 p-2 shadow-raised backdrop-blur">
         {voltar && (
-          <Button type="button" variante="secundario" onClick={voltar}>
+          <Button type="button" variante="fantasma" tamanho="lg" onClick={voltar} className="px-4">
             Voltar
           </Button>
         )}
-        <Button type="button" onClick={salvar} disabled={pendente} className="flex-1">
+        <Button type="button" tamanho="lg" onClick={salvar} disabled={pendente} className="flex-1">
           {pendente ? "Salvando…" : rotulo}
         </Button>
       </div>
