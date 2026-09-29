@@ -71,3 +71,19 @@ Migrações em `supabase/migrations` (aplicar em ordem). A base de alimentos, re
 ## Expansões preparadas
 
 O motor nutricional é independente da interface (`src/lib/nutrition`), permitindo reutilização em apps iOS/Android, integração com balanças e relógios, leitura de código de barras/rótulos e acompanhamento por nutricionista.
+
+## Decisões de design (com base em pesquisa)
+
+**Cor.** Verde-azulado (`#0E6B5C`): o verde é associado a saúde e natureza e o azul a competência e confiança (Elliot & Maier, *Annu Rev Psychol*, 2014, doi:10.1146/annurev-psych-010213-115035; Labrecque & Milne, *J Acad Mark Sci*, 2011, doi:10.1007/s11747-010-0245-y). A cor é usada só na marca e nas ações — **nunca para rotular alimentos ou valores como bons/ruins**, porque rótulos verdes aumentam a percepção de saúde independentemente do conteúdo (Schuldt, *Health Commun*, 2013, doi:10.1080/10410236.2012.725270). Excesso em relação a uma meta aparece em cinza, não em vermelho/verde. Contraste de todos os textos ≥ 4,5:1 (WCAG AA).
+
+**Minimalismo e densidade.** Baixa complexidade visual melhora a primeira impressão (Tuch et al., *Int J Hum-Comput Stud*, 2012, doi:10.1016/j.ijhcs.2012.06.003): fundo claro, poucas cores, cartões planos, detalhes recolhidos (divulgação progressiva), refeições em linhas compactas que abrem ao toque e layout em colunas em telas largas.
+
+**Queixas de nutricionistas sobre apps e o que o NUTRI.AI faz:**
+
+| Queixa (fonte) | Resposta no produto |
+|---|---|
+| Base de alimentos imprecisa (52%) e sem alimentos locais (48%) — Vasiloglou et al., *Nutrients*, 2020, doi:10.3390/nu12082214 | TACO + USDA com a fonte visível em cada refeição e receita; medidas caseiras brasileiras |
+| Automonitoramento trabalhoso — Chen et al., *JMIR mHealth*, 2017, doi:10.2196/mhealth.6945; Cordeiro et al., CHI 2015, doi:10.1145/2702123.2702155 | Registro em um toque por refeição e “Segui tudo neste dia” |
+| Foco em peso/calorias e risco de transtornos alimentares (56%) — Vasiloglou et al., 2020 | Progresso por refeições e bem-estar; calorias recolhidas; opção de ocultar números; alertas de segurança |
+| Pouco apoio à prática do nutricionista e à integração — Chen et al., 2017 | **Relatório para o nutricionista** (uma página, imprimível/PDF) e exportação completa dos dados |
+| Facilidade de uso é o critério nº 1 (87%) — Vasiloglou et al., 2020; König et al., *JMIR mHealth*, 2021, doi:10.2196/20037 | Linguagem simples, ajuda contextual, alvos de toque ≥ 44 px, navegação agrupada por tarefa |

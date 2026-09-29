@@ -11,7 +11,7 @@ export default function Carregando() {
       </div>
       <div className="space-y-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-40 rounded-3xl border border-line bg-surface" />
+          <div key={i} className="h-40 rounded-2xl border border-line bg-surface" />
         ))}
       </div>
     </div>

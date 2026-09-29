@@ -79,7 +79,7 @@ export default async function Evidencias() {
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">{calc.formulas.map((f) => <li key={f}>{f}</li>)}</ul>
         </Card>
       )}
-      <details className="group rounded-3xl border border-line/80 bg-surface shadow-card">
+      <details className="group rounded-2xl border border-line/80 bg-surface shadow-card">
         <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3">
           <span>
             <span className="block font-bold">Biblioteca de referências · {FONTES.length}</span>

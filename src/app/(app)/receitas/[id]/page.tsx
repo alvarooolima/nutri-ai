@@ -22,7 +22,7 @@ export default async function Receita({ params }: PageProps<"/receitas/[id]">) {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader titulo={r.nome} subtitulo={r.descricao} voltar="/receitas" />
-      <div className="mb-5 flex h-40 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-soft to-accent-soft text-7xl" role="img" aria-label={`Ilustração: ${r.nome}`}>
+      <div className="mb-5 flex h-40 items-center justify-center rounded-2xl bg-surface-2 text-7xl" role="img" aria-label={`Ilustração: ${r.nome}`}>
         {r.ilustracao}
       </div>
       <div className="mb-4 flex flex-wrap gap-2">

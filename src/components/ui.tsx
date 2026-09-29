@@ -16,7 +16,7 @@ export function cx(...c: (string | false | null | undefined)[]) {
 
 export function Card({ className, children, ...rest }: ComponentProps<"div">) {
   return (
-    <div className={cx("rounded-3xl border border-line/80 bg-surface p-5 shadow-card", className)} {...rest}>
+    <div className={cx("rounded-2xl border border-line bg-surface p-5", className)} {...rest}>
       {children}
     </div>
   );
@@ -29,7 +29,7 @@ const VAR: Record<Variante, string> = {
   secundario: "border border-line bg-surface text-ink hover:border-ink/20 hover:bg-surface-2",
   fantasma: "text-brand hover:bg-brand-soft",
   perigo: "bg-danger text-white hover:opacity-90",
-  suave: "bg-brand-soft text-brand-strong hover:bg-[#d4e6da]",
+  suave: "bg-brand-soft text-brand-strong hover:bg-[#d3e8e3]",
 };
 const TAM: Record<Tamanho, string> = {
   sm: "min-h-9 rounded-xl px-3 text-[13px]",
@@ -169,7 +169,7 @@ export function MetaBar({ rotulo, valor, meta, unidade, minimo = false }: { rotu
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-line/70" role="progressbar" aria-label={rotulo} aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
-        <div className={cx("h-full rounded-full transition-all", ok ? "bg-brand" : pct > 110 ? "bg-accent" : "bg-brand/60")} style={{ width: `${Math.min(100, pct)}%` }} />
+        <div className={cx("h-full rounded-full transition-all", ok ? "bg-brand" : pct > 110 ? "bg-ink/45" : "bg-brand/55")} style={{ width: `${Math.min(100, pct)}%` }} />
       </div>
     </div>
   );

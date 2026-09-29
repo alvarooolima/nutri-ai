@@ -74,7 +74,7 @@ export function Wizard({ perfil, etapaInicial }: { perfil: PerfilCompleto; etapa
           })}
         </nav>
       </div>
-      <section className="rounded-3xl border border-line/80 bg-surface p-5 shadow-card sm:p-6">
+      <section className="rounded-2xl border border-line/80 bg-surface p-5 shadow-card sm:p-6">
         {Atual ? (
           <Atual key={etapa} p={perfil} onSalvo={() => ir(etapa + 1)} voltar={etapa > 0 ? () => ir(etapa - 1) : undefined} />
         ) : (

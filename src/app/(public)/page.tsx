@@ -53,14 +53,14 @@ export default async function Home() {
       </section>
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {RECURSOS.map(({ icon: Icon, titulo, texto }) => (
-          <div key={titulo} className="rounded-3xl border border-line bg-surface p-5">
+          <div key={titulo} className="rounded-2xl border border-line bg-surface p-5">
             <Icon className="text-brand" size={22} />
             <h2 className="mt-3 font-bold">{titulo}</h2>
             <p className="mt-1 text-sm text-muted">{texto}</p>
           </div>
         ))}
       </section>
-      <section className="mt-10 rounded-3xl bg-accent-soft p-6">
+      <section className="mt-10 rounded-2xl bg-accent-soft p-6">
         <p className="text-sm font-semibold text-accent">Projeto especial de outubro</p>
         <h2 className="mt-1 text-2xl font-bold">Desafio 31 dias — Alimentação Japonesa</h2>
         <p className="mt-2 max-w-2xl text-sm text-ink/80">

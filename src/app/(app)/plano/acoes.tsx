@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Minus, PiggyBank, Plus, Sparkles } from "lucide-react";
+import { CheckCheck, HelpCircle, Minus, PiggyBank, Plus, Sparkles } from "lucide-react";
 import { Sheet } from "@/components/plano/refeicao-card";
 import { AlertBox, Button, Select, Field, Input } from "@/components/ui";
 import { MODOS } from "@/lib/nutrition/planner";
 import { ajustarFomeDia, gerarNovoPlano, reduzirCusto } from "@/lib/server/actions-plano";
+import { registrarDiaInteiro } from "@/lib/server/actions-registro";
 import type { Modo } from "@/lib/types";
 
 export function AcoesDia({ data }: { data: string }) {
@@ -20,31 +21,82 @@ export function AcoesDia({ data }: { data: string }) {
       router.refresh();
     });
   const ACOES = [
-    { rotulo: "Estou com mais fome hoje", apoio: "Aumenta um pouco as porções, com mais verduras e proteína", icon: Plus, fn: () => ajustarFomeDia(data, "mais") },
-    { rotulo: "Estou com menos fome hoje", apoio: "Diminui um pouco as porções, mantendo a proteína", icon: Minus, fn: () => ajustarFomeDia(data, "menos") },
-    { rotulo: "Quero gastar menos", apoio: "Troca refeições de hoje em diante por opções mais baratas e equivalentes", icon: PiggyBank, fn: () => reduzirCusto() },
+    { rotulo: "Mais fome", titulo: "Estou com mais fome hoje: aumenta um pouco as porções, com mais verduras e proteína", icon: Plus, fn: () => ajustarFomeDia(data, "mais") },
+    { rotulo: "Menos fome", titulo: "Estou com menos fome hoje: diminui um pouco as porções, mantendo a proteína", icon: Minus, fn: () => ajustarFomeDia(data, "menos") },
+    { rotulo: "Gastar menos", titulo: "Troca refeições de hoje em diante por opções mais baratas e equivalentes", icon: PiggyBank, fn: () => reduzirCusto() },
   ];
   return (
     <div className="space-y-2" aria-busy={pendente}>
-      {ACOES.map(({ rotulo, apoio, icon: Icon, fn }) => (
-        <button
-          key={rotulo}
-          disabled={pendente}
-          onClick={() => run(fn)}
-          className="flex min-h-16 w-full items-center gap-3.5 rounded-2xl border border-line/80 bg-surface px-4 py-3 text-left shadow-card transition hover:border-brand hover:bg-brand-soft/40 disabled:opacity-60"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <Icon size={20} aria-hidden />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[16px] font-semibold leading-snug">{rotulo}</span>
-            <span className="block text-[13px] text-muted">{apoio}</span>
-          </span>
-        </button>
-      ))}
-      {pendente && <p className="text-[15px] text-muted" role="status">Ajustando o cardápio…</p>}
+      <div className="grid grid-cols-3 gap-2">
+        {ACOES.map(({ rotulo, titulo, icon: Icon, fn }) => (
+          <button
+            key={rotulo}
+            title={titulo}
+            aria-label={titulo}
+            disabled={pendente}
+            onClick={() => run(fn)}
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-line px-1 text-center transition hover:border-brand hover:bg-brand-soft/40 disabled:opacity-60"
+          >
+            <Icon size={18} className="text-brand" aria-hidden />
+            <span className="text-[13px] font-semibold leading-tight">{rotulo}</span>
+          </button>
+        ))}
+      </div>
+      {pendente && <p className="text-sm text-muted" role="status">Ajustando o cardápio…</p>}
       {msg && <AlertBox gravidade="info" titulo="Pronto">{msg}</AlertBox>}
     </div>
+  );
+}
+
+/** Registro em um toque de todas as refeições pendentes do dia */
+export function SeguiTudo({ data }: { data: string }) {
+  const router = useRouter();
+  const [pendente, start] = useTransition();
+  return (
+    <Button
+      variante="suave"
+      tamanho="sm"
+      disabled={pendente}
+      onClick={() =>
+        start(async () => {
+          await registrarDiaInteiro(data);
+          router.refresh();
+        })
+      }
+    >
+      <CheckCheck size={16} /> {pendente ? "Registrando…" : "Segui tudo neste dia"}
+    </Button>
+  );
+}
+
+/** Ajuda curta num único botão, para não ocupar espaço vertical */
+export function Ajuda({ aberta = false }: { aberta?: boolean }) {
+  const [open, setOpen] = useState(aberta);
+  return (
+    <>
+      <Button variante="fantasma" tamanho="sm" onClick={() => setOpen(true)} aria-haspopup="dialog">
+        <HelpCircle size={16} /> Como usar
+      </Button>
+      {open && (
+        <Sheet titulo="Como usar o cardápio" onClose={() => setOpen(false)}>
+          <ol className="space-y-3 text-[15px] leading-relaxed">
+            {[
+              ["Escolha o dia", "com as setas ou pelo calendário."],
+              ["Toque numa refeição", "para ver o que comer e as quantidades."],
+              ["Depois de comer, responda", "“Sim”, “Só parte” ou “Outra coisa”. Se seguiu tudo, use “Segui tudo neste dia”."],
+              ["Precisa mudar algo?", "Use “Trocar algo” dentro da refeição, ou os ajustes do dia (mais fome, menos fome, gastar menos)."],
+            ].map(([t, d], i) => (
+              <li key={t} className="flex gap-3">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand-strong">{i + 1}</span>
+                <span>
+                  <strong>{t}</strong> {d}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Sheet>
+      )}
+    </>
   );
 }
 

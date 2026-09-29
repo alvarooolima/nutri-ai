@@ -68,7 +68,7 @@ export default async function Compras() {
                 const ordenados = [...g.itens].sort((a, b) => Number(a.comprado) - Number(b.comprado));
                 const feitos = g.itens.filter((i) => i.comprado).length;
                 return (
-                  <section key={g.categoria} className="break-inside-avoid overflow-hidden rounded-3xl border border-line/80 bg-surface shadow-card">
+                  <section key={g.categoria} className="break-inside-avoid overflow-hidden rounded-2xl border border-line/80 bg-surface shadow-card">
                     <h2 className="flex items-center justify-between border-b border-line/70 px-5 py-3 text-sm font-bold">
                       {g.categoria}
                       <span className="tabular text-xs font-medium text-muted">

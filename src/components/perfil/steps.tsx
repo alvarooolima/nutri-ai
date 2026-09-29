@@ -57,7 +57,7 @@ function Rodape({ salvar, pendente, erro, rotulo = "Salvar e continuar", voltar 
     <div className="sticky bottom-[calc(var(--nav-h,0px)+12px)] z-10 mt-8 space-y-3">
       {erro && <AlertBox gravidade="importante" titulo="Não foi possível salvar">{erro}</AlertBox>}
       {/* ação principal fixa e ao alcance do polegar (Fitts); voltar é secundário e menor */}
-      <div className="flex gap-2 rounded-3xl border border-line/80 bg-surface/95 p-2 shadow-raised backdrop-blur">
+      <div className="flex gap-2 rounded-2xl border border-line/80 bg-surface/95 p-2 shadow-raised backdrop-blur">
         {voltar && (
           <Button type="button" variante="fantasma" tamanho="lg" onClick={voltar} className="px-4">
             Voltar

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeftRight, Check, ChefHat, ChevronRight, Clock, Leaf, PiggyBank, Store, Timer, X, Zap } from "lucide-react";
+import { ArrowLeftRight, Check, ChefHat, ChevronDown, ChevronRight, Clock, Leaf, PiggyBank, Store, Timer, X, Zap } from "lucide-react";
 import { FOOD_MAP } from "@/data/foods";
 import { RECIPE_MAP } from "@/data/recipes";
 import { brl, formatMedida, macrosItens } from "@/lib/nutrition/foodmath";
@@ -32,7 +32,7 @@ export function Sheet({ titulo, descricao, onClose, children }: { titulo: string
       <div
         ref={ref}
         tabIndex={-1}
-        className="max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-surface px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-raised outline-none sm:rounded-3xl sm:pt-5"
+        className="max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 shadow-raised outline-none sm:rounded-2xl sm:pt-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" aria-hidden />
@@ -114,13 +114,16 @@ export function RefeicaoCard({
   mostrarMacros = true,
   unidades = "ambos",
   compacto = false,
+  abertoInicial = true,
 }: {
   r: RefeicaoView;
   registro?: Registro | null;
   mostrarMacros?: boolean;
   unidades?: string;
   compacto?: boolean;
+  abertoInicial?: boolean;
 }) {
+  const [aberto, setAberto] = useState(abertoInicial);
   const router = useRouter();
   const [pendente, start] = useTransition();
   const [painel, setPainel] = useState<null | "acoes" | "trocaRefeicao" | "trocaAlimento" | "fora" | "orientacao">(null);
@@ -167,95 +170,109 @@ export function RefeicaoCard({
       router.refresh();
     });
 
+  const TEXTO_CURTO: Record<StatusRegistro, string> = { sim: "Comi", parcial: "Comi parte", nao: "Comi outra coisa" };
+
   return (
-    <article className={cx("overflow-hidden rounded-3xl border bg-surface shadow-card", reg ? "border-brand/30" : "border-line/80")}>
-      <header className="flex items-start gap-3 p-4 sm:p-5">
+    <article className={cx("overflow-hidden rounded-2xl border bg-surface transition", aberto ? "border-line shadow-card" : "border-line")}>
+      {/* Linha-resumo: tudo o que importa numa linha; toque para ver detalhes (divulgação progressiva) */}
+      <button
+        type="button"
+        onClick={() => setAberto((a) => !a)}
+        aria-expanded={aberto}
+        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-surface-2/60 sm:px-5"
+      >
         {rec && (
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-soft to-accent-soft text-2xl" aria-hidden>
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-xl" aria-hidden>
             {rec.ilustracao}
           </span>
         )}
-        <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-bold leading-tight">
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-bold leading-tight">
             {r.nome}
             {r.horario && <span className="font-medium text-muted"> · {r.horario}</span>}
-          </h3>
-          <p className="mt-0.5 text-[15px] leading-snug text-ink/85">{r.foraDeCasa ? "Você vai comer fora de casa" : rec?.nome ?? "Refeição"}</p>
-          {r.nota && <p className="mt-1 text-[13px] text-muted">{r.nota}</p>}
-          {rec && !r.foraDeCasa && (
-            <Link href={`/receitas/${rec.id}`} className="mt-1 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand hover:underline">
-              <ChefHat size={16} /> Ver como preparar · {rec.tempo} min
-            </Link>
-          )}
-        </div>
-      </header>
-
-      {!r.foraDeCasa && (
-        <div className="px-4 sm:px-5">
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.06em] text-muted">O que comer</p>
-          <ul className="rounded-2xl bg-surface-2/70 px-3.5" aria-label={`Itens do ${r.nome.toLowerCase()}`}>
-            {r.itens.map((i, k) => (
-              <li key={k} className="border-t border-line/60 py-2.5 first:border-t-0">
-                <p className="text-[16px] font-semibold leading-snug">{FOOD_MAP[i.food]?.nome ?? i.food}</p>
-                <p className="tabular text-[15px] leading-snug text-ink/80">
-                  <Quantidade i={i} unidades={unidades} />
-                  {i.preparo && <span className="text-muted"> · {i.preparo}</span>}
-                </p>
-              </li>
-            ))}
-          </ul>
-          {mostrarMacros && <p className="tabular mt-2 text-[13px] text-muted">Cerca de {Math.round(m.kcal)} kcal e {Math.round(m.p)} g de proteína.</p>}
-        </div>
-      )}
-
-      {r.foraDeCasa && (
-        <div className="px-4 sm:px-5">
-          <button onClick={() => setPainel("fora")} className="min-h-10 text-sm font-semibold text-brand underline underline-offset-2">
-            Ver dicas para comer fora
-          </button>
-        </div>
-      )}
-
-      {!compacto && (
-        <div className="px-4 pt-3 sm:px-5">
-          <button onClick={() => setPainel("acoes")} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-surface text-[15px] font-semibold text-ink transition hover:border-brand/50 hover:bg-brand-soft/40">
-            <ArrowLeftRight size={17} className="text-brand" /> Trocar algo nesta refeição
-          </button>
-        </div>
-      )}
-
-      {/* Registro: pergunta simples; a resposta fica salva e visível ao voltar à página */}
-      <footer className={cx("mt-4 border-t p-4 sm:px-5", reg ? "border-brand/20 bg-brand-soft/70" : "border-line/60 bg-surface-2/60")} aria-live="polite">
+          </span>
+          <span className="block truncate text-[14px] text-ink/75">{r.foraDeCasa ? "Fora de casa" : rec?.nome ?? "Refeição"}</span>
+        </span>
         {reg ? (
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-              <Check size={18} />
-            </span>
-            <p className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-brand-strong">
-              {TEXTO_REGISTRO[reg.status]}
-              {reg.hora && <span className="block text-[13px] font-normal text-brand-strong/80">Registrado às {reg.hora.slice(0, 5)}</span>}
-            </p>
-            <button onClick={desfazer} disabled={pendente} className="min-h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-brand-strong underline underline-offset-2 disabled:opacity-60">
-              Desfazer
-            </button>
-          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand-strong">
+            <Check size={13} /> {TEXTO_CURTO[reg.status]}
+          </span>
         ) : (
-          <>
-            <p className="mb-2.5 text-[15px] font-semibold">Você já comeu esta refeição?</p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <button onClick={() => registrar("sim")} disabled={pendente} className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-brand px-3 text-[15px] font-semibold text-white shadow-card hover:bg-brand-strong disabled:opacity-60">
-                <Check size={18} /> Sim, comi
-              </button>
-              <button onClick={() => registrar("parcial")} disabled={pendente} className="min-h-12 rounded-2xl border border-line bg-surface px-3 text-[15px] font-semibold hover:bg-surface-2 disabled:opacity-60">
-                Comi só uma parte
-              </button>
-              <button onClick={() => registrar("nao")} disabled={pendente} className="min-h-12 rounded-2xl border border-line bg-surface px-3 text-[15px] font-semibold hover:bg-surface-2 disabled:opacity-60">
-                Comi outra coisa
-              </button>
-            </div>
-          </>
+          <span className="hidden shrink-0 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-muted sm:inline">Falta responder</span>
         )}
-      </footer>
+        <ChevronDown size={18} className={cx("shrink-0 text-muted transition", aberto && "rotate-180")} aria-hidden />
+      </button>
+
+      {aberto && (
+        <div className="border-t border-line px-4 pb-4 pt-3 sm:px-5">
+          {!r.foraDeCasa ? (
+            <>
+              <ul className="grid gap-x-6 2xl:grid-cols-2" aria-label={`Itens do ${r.nome.toLowerCase()}`}>
+                {r.itens.map((i, k) => (
+                  <li key={k} className="flex items-baseline justify-between gap-3 border-b border-line/70 py-2 text-[15px]">
+                    <span className="min-w-0 font-medium leading-snug">{FOOD_MAP[i.food]?.nome ?? i.food}</span>
+                    <span className="tabular max-w-[58%] shrink-0 text-right text-[13px] leading-snug text-muted">
+                      <Quantidade i={i} unidades={unidades} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted">
+                {mostrarMacros && <>≈ {Math.round(m.kcal)} kcal · {Math.round(m.p)} g de proteína · </>}
+                Valores: {[...new Set(r.itens.map((i) => (FOOD_MAP[i.food]?.fonte ?? "").split(" ")[0]))].filter(Boolean).join(" / ")}
+              </p>
+            </>
+          ) : (
+            <button onClick={() => setPainel("fora")} className="min-h-10 text-sm font-semibold text-brand underline underline-offset-2">
+              Ver dicas para comer fora
+            </button>
+          )}
+
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {!compacto && (
+              <button onClick={() => setPainel("acoes")} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-line px-2 text-sm font-semibold hover:border-brand/50 hover:bg-brand-soft/40">
+                <ArrowLeftRight size={15} className="text-brand" /> Trocar algo
+              </button>
+            )}
+            {rec && !r.foraDeCasa && (
+              <Link href={`/receitas/${rec.id}`} className="inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-line px-2 text-sm font-semibold hover:border-brand/50 hover:bg-brand-soft/40">
+                <ChefHat size={15} className="text-brand" /> Receita · {rec.tempo} min
+              </Link>
+            )}
+          </div>
+
+          {/* Registro: uma pergunta, três respostas numa linha; a resposta fica salva */}
+          <div className="mt-4 rounded-xl bg-surface-2 p-3" aria-live="polite">
+            {reg ? (
+              <div className="flex items-center gap-3">
+                <Check size={18} className="shrink-0 text-brand" aria-hidden />
+                <p className="min-w-0 flex-1 text-sm font-semibold text-brand-strong">
+                  {TEXTO_REGISTRO[reg.status]}
+                  {reg.hora && <span className="font-normal text-muted"> · às {reg.hora.slice(0, 5)}</span>}
+                </p>
+                <button onClick={desfazer} disabled={pendente} className="min-h-9 shrink-0 px-2 text-sm font-semibold text-muted underline underline-offset-2 hover:text-ink disabled:opacity-60">
+                  Desfazer
+                </button>
+              </div>
+            ) : (
+              <>
+                <p className="mb-2 text-sm font-semibold">Você já comeu esta refeição?</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => registrar("sim")} disabled={pendente} className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-brand px-2 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-60">
+                    <Check size={16} /> Sim
+                  </button>
+                  <button onClick={() => registrar("parcial")} disabled={pendente} className="min-h-11 rounded-xl border border-line bg-surface px-2 text-sm font-semibold hover:border-ink/20 disabled:opacity-60">
+                    Só parte
+                  </button>
+                  <button onClick={() => registrar("nao")} disabled={pendente} className="min-h-11 whitespace-nowrap rounded-xl border border-line bg-surface px-1 text-[13px] font-semibold hover:border-ink/20 disabled:opacity-60 sm:text-sm">
+                    Outra coisa
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {painel === "acoes" && (
         <Sheet titulo="O que você quer trocar?" descricao={`${r.nome}${rec ? ` · ${rec.nome}` : ""}`} onClose={fechar}>

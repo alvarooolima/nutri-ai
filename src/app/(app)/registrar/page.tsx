@@ -44,7 +44,7 @@ export default async function Registrar({ searchParams }: PageProps<"/registrar"
                 {[...agrupados.entries()].map(([d, itens]) => (
                   <div key={d}>
                     <p className="mb-1.5 px-1 text-xs font-bold uppercase tracking-[0.06em] text-muted">{rotuloDia(d)}</p>
-                    <ul className="divide-y divide-line/70 rounded-3xl border border-line/80 bg-surface px-4 shadow-card">
+                    <ul className="divide-y divide-line/70 rounded-2xl border border-line/80 bg-surface px-4 shadow-card">
                       {itens.map((l) => (
                         <RegistroItem
                           key={l.id}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChefHat, RefreshCcw, ShoppingBasket, Soup, Stethoscope } from "lucide-react";
+import { ArrowRight, ChefHat, FileText, RefreshCcw, ShoppingBasket, Soup, Stethoscope } from "lucide-react";
 import { AlertBox, Card, LinkButton } from "@/components/ui";
 import { RefeicaoCard } from "@/components/plano/refeicao-card";
 import { macrosItens } from "@/lib/nutrition/foodmath";
@@ -20,10 +20,10 @@ const dataLonga = (d: string) =>
 
 // Hick: poucos atalhos, só os que não estão na barra inferior
 const ATALHOS = [
-  { href: "/compras", nome: "Compras", icon: ShoppingBasket, cor: "bg-accent-soft text-accent" },
-  { href: "/receitas", nome: "Receitas", icon: ChefHat, cor: "bg-brand-soft text-brand-strong" },
-  { href: "/sintomas", nome: "Sintoma", icon: Stethoscope, cor: "bg-danger-soft text-danger" },
-  { href: "/revisao", nome: "Ajustar", icon: RefreshCcw, cor: "bg-info-soft text-info" },
+  { href: "/compras", nome: "Compras", icon: ShoppingBasket, cor: "bg-brand-soft text-brand" },
+  { href: "/receitas", nome: "Receitas", icon: ChefHat, cor: "bg-brand-soft text-brand" },
+  { href: "/sintomas", nome: "Sintoma", icon: Stethoscope, cor: "bg-brand-soft text-brand" },
+  { href: "/revisao", nome: "Revisão", icon: RefreshCcw, cor: "bg-brand-soft text-brand" },
 ];
 
 export default async function Inicio() {
@@ -49,7 +49,7 @@ export default async function Inicio() {
   const nome = u?.nome?.split(" ")[0] || "você";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-brand">{dataLonga(hoje)}</p>
         <h1 className="mt-1 text-[26px] font-bold leading-tight tracking-tight sm:text-[30px]">
@@ -66,6 +66,8 @@ export default async function Inicio() {
         </AlertBox>
       ))}
 
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="min-w-0 space-y-6">
       {/* Ponto focal: o que fazer agora */}
       <section className="space-y-3" aria-labelledby="hoje">
         <div className="flex items-end justify-between gap-3">
@@ -124,13 +126,11 @@ export default async function Inicio() {
         )}
       </section>
 
-      <CheckIn inicial={{ energia: track?.energia ?? null, fome: track?.fome ?? null, sono: track?.sono ?? null, agua: track?.agua_ml ?? 0 }} />
-
       <section aria-label="Atalhos">
         <ul className="grid grid-cols-4 gap-2 sm:gap-3">
           {ATALHOS.map(({ href, nome: n, icon: Icon, cor }) => (
             <li key={href}>
-              <Link href={href} className="flex h-full min-h-22 flex-col items-center justify-center gap-2 rounded-3xl border border-line/80 bg-surface p-3 text-center shadow-card transition hover:border-brand/40">
+              <Link href={href} className="flex h-full min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-line bg-surface p-2 text-center transition hover:border-brand/40">
                 <span className={`flex size-10 items-center justify-center rounded-2xl ${cor}`}>
                   <Icon size={20} />
                 </span>
@@ -141,17 +141,30 @@ export default async function Inicio() {
         </ul>
       </section>
 
-      <Link href="/desafio" className="group flex items-center gap-4 rounded-3xl bg-accent-soft p-5 transition hover:brightness-[0.98]">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-accent shadow-card">
-          <Soup size={24} />
+      </div>
+      <div className="min-w-0 space-y-6">
+      <CheckIn inicial={{ energia: track?.energia ?? null, fome: track?.fome ?? null, sono: track?.sono ?? null, agua: track?.agua_ml ?? 0 }} />
+      <Link href="/relatorio" className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4 transition hover:border-brand/40">
+        <FileText size={20} className="shrink-0 text-brand" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold">Relatório para o nutricionista</span>
+          <span className="block text-[13px] text-muted">Resumo de uma página para levar à consulta</span>
+        </span>
+        <ArrowRight size={18} className="shrink-0 text-muted" aria-hidden />
+      </Link>
+      <Link href="/desafio" className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 transition hover:border-brand/40">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-brand">
+          <Soup size={22} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-xs font-bold uppercase tracking-[0.08em] text-accent">{hoje.slice(5, 7) === "10" ? "Outubro é mês do desafio" : "Projeto especial"}</span>
-          <span className="mt-0.5 block text-base font-bold leading-snug">Desafio 31 dias — Alimentação Japonesa</span>
-          <span className="block text-[13px] text-ink/70">Cardápio, compras semanais e controle de sódio.</span>
+          <span className="block text-xs font-bold uppercase tracking-[0.08em] text-brand">{hoje.slice(5, 7) === "10" ? "Outubro é mês do desafio" : "Projeto especial"}</span>
+          <span className="mt-0.5 block text-[15px] font-semibold leading-snug">Desafio 31 dias — Alimentação Japonesa</span>
+          <span className="block text-[13px] text-muted">Cardápio, compras e controle de sódio</span>
         </span>
-        <ArrowRight size={20} className="shrink-0 text-accent transition group-hover:translate-x-0.5" aria-hidden />
+        <ArrowRight size={18} className="shrink-0 text-muted transition group-hover:translate-x-0.5" aria-hidden />
       </Link>
+      </div>
+      </div>
     </div>
   );
 }

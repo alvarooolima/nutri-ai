@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, BookOpen, CalendarDays, ChefHat, ClipboardList, HeartPulse, History, Home, LineChart, MessageCircle,
+  AlertTriangle, BookOpen, FileText, CalendarDays, ChefHat, ClipboardList, HeartPulse, History, Home, LineChart, MessageCircle,
   RefreshCcw, Settings, ShoppingBasket, Soup, Stethoscope, User, UtensilsCrossed, type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +36,7 @@ export const GRUPOS: { titulo: string; areas: Area[] }[] = [
     areas: [
       { href: "/evolucao", nome: "Evolução", descricao: "Gráficos além do peso", icon: LineChart },
       { href: "/revisao", nome: "Revisão e ajustes", descricao: "Balanço a cada 1–2 semanas", icon: RefreshCcw },
+      { href: "/relatorio", nome: "Relatório p/ nutricionista", descricao: "Resumo de uma página para a consulta", icon: FileText },
       { href: "/historico", nome: "Histórico de planos", descricao: "Versões e alterações", icon: History },
     ],
   },

@@ -89,7 +89,7 @@ export default async function Desafio() {
                 const n = dias.indexOf(d) + 1;
                 const principais = d.refeicoes.filter((r) => r.tipo === "almoco" || r.tipo === "jantar");
                 return (
-                  <li key={d.data} className={`rounded-3xl border bg-surface p-4 ${d.data === hoje ? "border-brand" : "border-line"}`}>
+                  <li key={d.data} className={`rounded-2xl border bg-surface p-4 ${d.data === hoje ? "border-brand" : "border-line"}`}>
                     <div className="flex items-center justify-between">
                       <Link href={`/plano?dia=${d.data}`} className="font-bold hover:text-brand">Dia {n} <span className="text-xs font-normal text-muted">{d.data.split("-").reverse().slice(0, 2).join("/")}</span></Link>
                       <DiaCheck dia={n} feito={feitos.has(n)} />

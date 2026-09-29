@@ -45,14 +45,14 @@ export default async function Receitas({ searchParams }: PageProps<"/receitas">)
         ))}
         <Link href={url("rapido", rapido ? "" : "1")} className={chip(rapido)}>Até 15 min</Link>
       </div>
-      {lista.length === 0 && <p className="rounded-3xl bg-surface-2 p-6 text-center text-sm text-muted">Nenhuma receita com esses filtros. <Link href="/receitas" className="font-semibold text-brand">Limpar filtros</Link></p>}
+      {lista.length === 0 && <p className="rounded-2xl bg-surface-2 p-6 text-center text-sm text-muted">Nenhuma receita com esses filtros. <Link href="/receitas" className="font-semibold text-brand">Limpar filtros</Link></p>}
       <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {lista.map((r) => {
           const m = macrosItens(r.itens);
           return (
             <li key={r.id}>
-              <Link href={`/receitas/${r.id}`} className="group flex h-full overflow-hidden rounded-3xl border border-line/80 bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-raised sm:flex-col">
-                <div className="flex w-24 shrink-0 items-center justify-center bg-gradient-to-br from-brand-soft to-accent-soft text-4xl sm:aspect-[16/7] sm:w-auto sm:text-5xl" aria-hidden>{r.ilustracao}</div>
+              <Link href={`/receitas/${r.id}`} className="group flex h-full overflow-hidden rounded-2xl border border-line/80 bg-surface shadow-card transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-raised sm:flex-col">
+                <div className="flex w-24 shrink-0 items-center justify-center bg-surface-2 text-4xl sm:aspect-[16/7] sm:w-auto sm:text-5xl" aria-hidden>{r.ilustracao}</div>
                 <div className="flex min-w-0 flex-1 flex-col p-4">
                   <h2 className="text-[15px] font-bold leading-snug">{r.nome}</h2>
                   <p className="mt-1 text-xs text-muted">{r.tempo} min · {r.dificuldade}{r.tags.includes("marmita") && " · marmita"}</p>

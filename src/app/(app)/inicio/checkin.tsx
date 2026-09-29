@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Droplets, Minus, Plus } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { adicionarAgua, registrarDia } from "@/lib/server/actions-registro";
 import { cx } from "@/components/ui";
 
@@ -34,52 +34,55 @@ export function CheckIn({ inicial }: { inicial: { energia: number | null; fome: 
   return (
     <section aria-labelledby="checkin" className="space-y-3">
       <div>
-        <h2 id="checkin" className="text-lg font-bold tracking-tight">Check-in rápido</h2>
-        <p className="text-[13px] text-muted">Um toque por linha. Ajuda a ajustar o plano sem depender só do peso.</p>
+        <h2 id="checkin" className="text-lg font-bold tracking-tight">Como você está</h2>
+        <p className="text-[13px] text-muted">Um toque por linha — o plano não depende só do peso.</p>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_200px]">
-        <div className="min-w-0 divide-y divide-line/70 rounded-3xl border border-line/80 bg-surface px-3 shadow-card sm:px-4">
-          {ITENS.map(({ k, nome, emojis, rotulos }) => (
-            <div key={k} className="flex items-center gap-3 py-3">
-              <div className="w-[72px] shrink-0">
-                <p className="text-sm font-semibold">{nome}</p>
-                <p className={cx("text-xs", v[k] ? "font-medium text-brand-strong" : "text-muted")} aria-live="polite">
-                  {v[k] ? rotulos[v[k]! - 1] : "—"}
-                </p>
-              </div>
-              <div className="flex min-w-0 flex-1 justify-between gap-0.5" role="radiogroup" aria-label={nome}>
-                {emojis.map((e, i) => (
-                  <button
-                    key={i}
-                    role="radio"
-                    aria-checked={v[k] === i + 1}
-                    aria-label={`${nome}: ${rotulos[i]}`}
-                    title={rotulos[i]}
-                    onClick={() => marcar(k, i + 1)}
-                    className={cx("flex size-10 items-center justify-center rounded-2xl text-xl transition sm:size-11", v[k] === i + 1 ? "bg-brand-soft ring-2 ring-brand" : "hover:bg-surface-2")}
-                  >
-                    {e}
-                  </button>
-                ))}
-              </div>
+      <div className="divide-y divide-line rounded-2xl border border-line bg-surface px-3 sm:px-4">
+        {ITENS.map(({ k, nome, emojis, rotulos }) => (
+          <div key={k} className="flex items-center gap-2 py-2.5">
+            <div className="w-[72px] shrink-0">
+              <p className="text-sm font-semibold">{nome}</p>
+              <p className={cx("text-xs", v[k] ? "font-medium text-brand-strong" : "text-muted")} aria-live="polite">
+                {v[k] ? rotulos[v[k]! - 1] : "—"}
+              </p>
             </div>
-          ))}
-        </div>
-        <div className="flex min-w-0 items-center gap-3 rounded-3xl bg-info-soft p-4 sm:flex-col sm:justify-center sm:text-center">
-          <Droplets className="shrink-0 text-info" size={26} aria-hidden />
-          <div className="min-w-0 flex-1 sm:flex-none">
-            <p className="tabular text-xl font-bold text-info">{(v.agua / 1000).toFixed(2).replace(".", ",")} L</p>
-            <p className="text-xs text-info/80">{copos} {copos === 1 ? "copo" : "copos"} de 250 ml</p>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-info/15 sm:w-32">
-              <div className="h-full rounded-full bg-info" style={{ width: `${Math.min(100, (v.agua / META_AGUA) * 100)}%` }} />
+            <div className="flex min-w-0 flex-1 justify-between gap-0.5" role="radiogroup" aria-label={nome}>
+              {emojis.map((e, i) => (
+                <button
+                  key={i}
+                  role="radio"
+                  aria-checked={v[k] === i + 1}
+                  aria-label={`${nome}: ${rotulos[i]}`}
+                  title={rotulos[i]}
+                  onClick={() => marcar(k, i + 1)}
+                  className={cx("flex size-10 items-center justify-center rounded-xl text-lg transition", v[k] === i + 1 ? "bg-brand-soft ring-2 ring-brand" : "opacity-80 hover:bg-surface-2 hover:opacity-100")}
+                >
+                  {e}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex gap-1.5">
-            <button onClick={() => agua(-250)} disabled={v.agua <= 0} aria-label="Remover um copo" className="flex size-11 items-center justify-center rounded-full bg-surface text-info shadow-card disabled:opacity-40">
-              <Minus size={18} />
+        ))}
+        {/* água como mais uma linha do mesmo cartão (menos blocos, menos rolagem) */}
+        <div className="flex items-center gap-2 py-2.5">
+          <div className="w-[72px] shrink-0">
+            <p className="text-sm font-semibold">Água</p>
+            <p className="tabular text-xs text-muted">{copos} {copos === 1 ? "copo" : "copos"}</p>
+          </div>
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="tabular text-sm font-bold">
+                {(v.agua / 1000).toFixed(2).replace(".", ",")} L <span className="font-normal text-muted">/ 2 L</span>
+              </p>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line">
+                <div className="h-full rounded-full bg-brand" style={{ width: `${Math.min(100, (v.agua / META_AGUA) * 100)}%` }} />
+              </div>
+            </div>
+            <button onClick={() => agua(-250)} disabled={v.agua <= 0} aria-label="Remover um copo" className="flex size-10 items-center justify-center rounded-full border border-line text-ink disabled:opacity-40">
+              <Minus size={16} />
             </button>
-            <button onClick={() => agua(250)} aria-label="Adicionar um copo" className="flex size-11 items-center justify-center rounded-full bg-info text-white shadow-card">
-              <Plus size={18} />
+            <button onClick={() => agua(250)} aria-label="Adicionar um copo de 250 ml" className="flex size-10 items-center justify-center rounded-full bg-brand text-white">
+              <Plus size={16} />
             </button>
           </div>
         </div>

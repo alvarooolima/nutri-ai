@@ -260,3 +260,22 @@ export async function alterarSenha(senha: string) {
   const { error } = await supabase.auth.updateUser({ password: senha });
   return error ? { ok: false, erro: error.message } : { ok: true };
 }
+
+/** Um toque: marca como "comi" todas as refeições do dia ainda sem resposta (reduz o esforço de registro) */
+export async function registrarDiaInteiro(data: string) {
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/).parse(data);
+  const { supabase, user } = await requireUser();
+  const { data: plano } = await supabase.from("meal_plans").select("id").eq("user_id", user.id).eq("status", "ativo").limit(1).maybeSingle();
+  if (!plano) return { ok: false, registradas: 0 };
+  const { data: meals } = await supabase.from("meals").select("id,nome,horario").eq("meal_plan_id", plano.id).eq("dia", data);
+  const ids = (meals ?? []).map((m) => m.id);
+  const { data: ja } = ids.length ? await supabase.from("food_logs").select("meal_id").eq("user_id", user.id).in("meal_id", ids) : { data: [] };
+  const feitos = new Set((ja ?? []).map((l) => l.meal_id));
+  const novos = (meals ?? []).filter((m) => !feitos.has(m.id));
+  if (novos.length)
+    await supabase.from("food_logs").insert(
+      novos.map((m) => ({ user_id: user.id, data, hora: m.horario?.slice(0, 5) ?? null, refeicao: m.nome, meal_id: m.id, descricao: `${m.nome} do plano`, seguiu_plano: "sim" })),
+    );
+  revalidatePath("/", "layout");
+  return { ok: true, registradas: novos.length };
+}

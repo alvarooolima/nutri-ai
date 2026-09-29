@@ -15,7 +15,7 @@ export default function Mais() {
         {GRUPOS.map((g) => (
           <section key={g.titulo}>
             <h2 className="mb-2 px-1 text-xs font-bold uppercase tracking-[0.08em] text-muted">{g.titulo}</h2>
-            <ul className="divide-y divide-line/70 overflow-hidden rounded-3xl border border-line/80 bg-surface shadow-card">
+            <ul className="divide-y divide-line/70 overflow-hidden rounded-2xl border border-line/80 bg-surface shadow-card">
               {g.areas.map(({ href, nome, descricao, icon: Icon }) => (
                 <li key={href}>
                   <Link href={href} className="flex min-h-16 items-center gap-3.5 px-4 py-3 transition hover:bg-surface-2">

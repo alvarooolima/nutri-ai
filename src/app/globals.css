@@ -2,23 +2,32 @@
 
 :root {
   color-scheme: light;
-  --bg: #f6f4ee;
+  /*
+   * Paleta (psicologia das cores, com base em pesquisa):
+   * - Verde-azulado (teal): verde associado a saúde/natureza (Elliot & Maier, 2014) + azul associado a
+   *   competência e confiança (Labrecque & Milne, 2011) — adequado a um serviço de nutrição profissional.
+   * - A cor da marca é usada só em identidade e ações, nunca para rotular alimentos como "bons" ou "ruins":
+   *   rótulos verdes aumentam a percepção de saúde independentemente do conteúdo (Schuldt, 2013).
+   * - Base neutra e clara, poucas cores (baixa complexidade visual melhora a primeira impressão — Tuch et al., 2012).
+   * Todos os pares de texto atendem WCAG AA (≥ 4,5:1).
+   */
+  --bg: #fafbfa;
   --surface: #ffffff;
-  --surface-2: #fbfaf6;
-  --ink: #1d2a23;
-  --muted: #5b6961;
-  --line: #e5e1d6;
-  --brand: #2f6b4f;
-  --brand-strong: #235440;
-  --brand-soft: #e2eee6;
-  --accent: #c9683d;
-  --accent-soft: #fbeae0;
-  --warn: #9a6a12;
-  --warn-soft: #fbf1d9;
-  --danger: #a63d2c;
-  --danger-soft: #f9e2dc;
-  --info: #2b5a86;
-  --info-soft: #e3edf7;
+  --surface-2: #f3f6f5;
+  --ink: #122420;
+  --muted: #566763;
+  --line: #e3e9e7;
+  --brand: #0e6b5c;
+  --brand-strong: #0a5448;
+  --brand-soft: #e3f1ee;
+  --accent: #9a5b13;
+  --accent-soft: #fbf3e6;
+  --warn: #8a5a00;
+  --warn-soft: #fcf4e2;
+  --danger: #b3261e;
+  --danger-soft: #fbeceb;
+  --info: #1f5f8b;
+  --info-soft: #e8f1f8;
 }
 
 @theme inline {
@@ -41,8 +50,8 @@
   --color-info-soft: var(--info-soft);
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   /* elevação: separa figura (cartões) do fundo sem ruído visual */
-  --shadow-card: 0 1px 2px rgba(29, 42, 35, 0.05), 0 1px 1px rgba(29, 42, 35, 0.03);
-  --shadow-raised: 0 8px 24px -8px rgba(29, 42, 35, 0.18), 0 2px 6px rgba(29, 42, 35, 0.06);
+  --shadow-card: 0 1px 2px rgba(18, 36, 32, 0.035);
+  --shadow-raised: 0 12px 32px -12px rgba(18, 36, 32, 0.22), 0 2px 6px rgba(18, 36, 32, 0.06);
 }
 
 html,
@@ -93,5 +102,15 @@ input[type="range"] {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  main {
+    padding: 0 !important;
   }
 }

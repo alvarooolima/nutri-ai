@@ -52,13 +52,13 @@ export function Chat({ inicial }: { inicial: Msg[] }) {
     <div className="flex min-h-[60dvh] flex-col">
       <div className="flex-1 space-y-3">
         {msgs.length === 0 && (
-          <div className="rounded-3xl border border-line bg-surface p-5 text-sm text-muted">
+          <div className="rounded-2xl border border-line bg-surface p-5 text-sm text-muted">
             Oi! Posso adaptar seu plano a imprevistos, sugerir trocas, opções por orçamento ou dicas para comer fora. Não substituo seu médico ou nutricionista.
           </div>
         )}
         {msgs.map((m, i) => (
           <div key={i} className={cx("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-            <div className={cx("max-w-[85%] whitespace-pre-line rounded-3xl px-4 py-3 text-[15px]", m.role === "user" ? "rounded-br-lg bg-brand text-white" : "rounded-bl-lg border border-line bg-surface")}>
+            <div className={cx("max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-3 text-[15px]", m.role === "user" ? "rounded-br-lg bg-brand text-white" : "rounded-bl-lg border border-line bg-surface")}>
               {m.content}
               {m.acoes && m.acoes.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2">
